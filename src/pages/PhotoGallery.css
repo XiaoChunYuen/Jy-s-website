@@ -1,0 +1,129 @@
+/* Simple fade-in animation for sections */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.animate-delay-1 {
+  animation-delay: 0.1s;
+}
+
+.animate-delay-2 {
+  animation-delay: 0.2s;
+}
+
+.animate-delay-3 {
+  animation-delay: 0.3s;
+}
+
+/* Photo Scatter Gallery Styles - Clean, large images */
+
+.photo-scatter {
+  position: relative;
+  width: 380px;
+  height: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Main Photo - larger, adapts to image aspect ratio */
+.main-photo {
+  position: relative;
+  z-index: 10;
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  max-width: 340px;
+}
+
+.main-photo__image {
+  width: 100%;
+  max-height: 440px;
+  object-fit: contain;
+  border-radius: 28px;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.18), 0 12px 30px rgba(0, 0, 0, 0.12);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  display: block;
+}
+
+.main-photo:hover .main-photo__image {
+  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.22), 0 18px 40px rgba(0, 0, 0, 0.14);
+  transform: scale(1.02);
+}
+
+.main-photo--scattered .main-photo__image {
+  transform: scale(0.9);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.12);
+}
+
+/* Scattered Photos - larger, clean */
+.scatter-photo {
+  position: absolute;
+  z-index: 1;
+  opacity: 0;
+  transform: translate3d(0, 0, 0) rotate(0deg) scale(0.5);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  max-width: 200px;
+}
+
+.scatter-photo--visible {
+  opacity: 1;
+  transform: translate3d(var(--x), var(--y), 0) rotate(var(--rotate)) scale(var(--scale));
+  transition-delay: var(--delay);
+}
+
+.scatter-photo:hover {
+  z-index: 100 !important;
+  transform: translate3d(var(--x), var(--y), 0) rotate(0deg) scale(1.1) !important;
+  transition-delay: 0ms !important;
+}
+
+.scatter-photo__image {
+  width: 100%;
+  max-height: 260px;
+  object-fit: contain;
+  border-radius: 24px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.18);
+  transition: all 0.3s ease;
+  display: block;
+}
+
+.scatter-photo:hover .scatter-photo__image {
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.28);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .photo-scatter {
+    width: 320px;
+    height: 400px;
+  }
+
+  .main-photo {
+    max-width: 280px;
+  }
+
+  .main-photo__image {
+    max-height: 360px;
+    border-radius: 24px;
+  }
+
+  .scatter-photo {
+    max-width: 150px;
+  }
+
+  .scatter-photo__image {
+    max-height: 200px;
+    border-radius: 20px;
+  }
+}

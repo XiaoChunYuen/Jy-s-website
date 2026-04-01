@@ -16,6 +16,15 @@ export const translations = {
     },
     home: {
       hero: 'Crafting digital experiences with purpose',
+      heroTitle: "Welcome to Jy's Channel",
+      heroSubtitle: 'Explore · Create · Share',
+      scroll: 'Scroll',
+      portfolioLabel: 'Portfolio',
+      portfolioTitle: 'Selected Work',
+      portfolioDesc: 'A curated collection of projects spanning product design, user experience, and digital innovation.',
+      getInTouch: 'Get in Touch',
+      viewResume: 'View Resume',
+      viewProject: 'View Project',
       project1: {
         title: 'Urban Mobility',
         category: 'UI/UX Design • 2023'
@@ -31,6 +40,10 @@ export const translations = {
         current: 'Urban Mobility Case Study'
       },
       hero: 'The Future of Urban Transit',
+      process: 'Process',
+      previous: 'Previous',
+      backToWork: 'Back to Work',
+      nextProject: 'Next Project',
       meta: {
         duration: 'Duration',
         durationValue: '12 Weeks (Fall 2023)',
@@ -112,6 +125,10 @@ export const translations = {
     },
     services: {
       title: 'Services',
+      whatIDo: 'What I Do',
+      ctaTitle: 'Have a project in mind?',
+      ctaDesc: 'I\'m always open to discussing product design work or partnership opportunities.',
+      ctaButton: 'Get in Touch',
       items: [
         {
           title: 'Product Design',
@@ -129,8 +146,58 @@ export const translations = {
     },
     contact: {
       title: 'Get in Touch',
+      letsConnect: 'Let\'s Connect',
+      email: 'Email',
+      emailDesc: 'For project inquiries and collaborations',
+      social: 'Social',
+      socialDesc: 'Follow me for updates and behind-the-scenes',
       desc: 'I am always open to discussing product design work or partnership opportunities.',
-      email: 'hello@example.com'
+      emailAddress: 'hello@example.com',
+      phone: 'Phone',
+      wechat: 'WeChat',
+      xiaohongshu: 'Rednote'
+    },
+    resume: {
+      subtitle: 'Resume',
+      downloadPDF: 'Download PDF',
+      previewPDF: 'Preview PDF',
+      education: 'Education',
+      internship: 'Internship Experience',
+      competition: 'Competition Experience',
+      campus: 'Campus Experience',
+      noFile: 'Resume PDF not uploaded yet',
+      educationList: [
+        {
+          degree: 'Bachelor of Design',
+          school: 'Rhode Island School of Design',
+          period: '2021 — 2025',
+          description: 'Major in Interaction Design, GPA 3.8/4.0'
+        }
+      ],
+      internshipList: [
+        {
+          title: 'Product Design Intern',
+          company: 'TechNova Solutions',
+          period: 'Summer 2024',
+          description: 'Collaborated with the design team to create user interfaces for mobile applications. Conducted user research and usability testing.'
+        }
+      ],
+      competitionList: [
+        {
+          title: 'UX Design Award',
+          organizer: 'International Design Competition',
+          period: '2024',
+          description: 'Won first place in the student category for innovative mobile app design.'
+        }
+      ],
+      campusList: [
+        {
+          title: 'Design Club President',
+          organization: 'University Design Club',
+          period: '2023 — 2024',
+          description: 'Led a team of 20 students to organize design workshops and events. Increased club membership by 50%.'
+        }
+      ]
     }
   },
   zh: {
@@ -148,6 +215,15 @@ export const translations = {
     },
     home: {
       hero: '用心打造数字体验',
+      heroTitle: '欢迎来到 Jy 的频道',
+      heroSubtitle: '探索 · 创造 · 分享',
+      scroll: '滚动浏览',
+      portfolioLabel: '作品集',
+      portfolioTitle: '精选作品',
+      portfolioDesc: '精心策划的项目集，涵盖产品设计、用户体验和数字创新。',
+      getInTouch: '联系我',
+      viewResume: '查看简历',
+      viewProject: '查看项目',
       project1: {
         title: '城市出行',
         category: 'UI/UX 设计 • 2023'
@@ -163,6 +239,10 @@ export const translations = {
         current: '城市出行案例研究'
       },
       hero: '城市交通的未来',
+      process: '过程',
+      previous: '上一个',
+      backToWork: '返回作品',
+      nextProject: '下一个项目',
       meta: {
         duration: '周期',
         durationValue: '12周 (2023秋季)',
@@ -244,6 +324,10 @@ export const translations = {
     },
     services: {
       title: '服务',
+      whatIDo: '我的服务',
+      ctaTitle: '有项目想法？',
+      ctaDesc: '我随时乐意讨论产品设计工作或合作机会。',
+      ctaButton: '联系我',
       items: [
         {
           title: '产品设计',
@@ -261,8 +345,58 @@ export const translations = {
     },
     contact: {
       title: '联系我',
+      letsConnect: '保持联系',
+      email: '邮箱',
+      emailDesc: '项目咨询与合作',
+      social: '社交媒体',
+      socialDesc: '关注我获取最新动态',
       desc: '我随时乐意讨论产品设计工作或合作机会。',
-      email: 'hello@example.com'
+      emailAddress: 'hello@example.com',
+      phone: '电话',
+      wechat: '微信',
+      xiaohongshu: '小红书'
+    },
+    resume: {
+      subtitle: '个人简历',
+      downloadPDF: '下载 PDF',
+      previewPDF: '预览 PDF',
+      education: '教育背景',
+      internship: '实习经历',
+      competition: '竞赛经历',
+      campus: '校园经历',
+      noFile: '尚未上传简历 PDF',
+      educationList: [
+        {
+          degree: '设计学士',
+          school: '罗德岛设计学院',
+          period: '2021 — 2025',
+          description: '交互设计专业，GPA 3.8/4.0'
+        }
+      ],
+      internshipList: [
+        {
+          title: '产品设计实习生',
+          company: 'TechNova Solutions',
+          period: '2024 暑期',
+          description: '与设计团队合作创建移动应用用户界面，进行用户研究和可用性测试。'
+        }
+      ],
+      competitionList: [
+        {
+          title: 'UX 设计奖',
+          organizer: '国际设计大赛',
+          period: '2024',
+          description: '凭借创新的移动应用设计获得学生组一等奖。'
+        }
+      ],
+      campusList: [
+        {
+          title: '设计俱乐部主席',
+          organization: '大学设计俱乐部',
+          period: '2023 — 2024',
+          description: '带领 20 人团队组织设计工作坊和活动，会员人数增长 50%。'
+        }
+      ]
     }
   }
 };
