@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
+  isSupabaseConfigured,
   supabase,
   type Project,
   type ResumeExperience,
@@ -34,6 +35,12 @@ export function CMSProvider({ children }: { children: ReactNode }) {
   const fetchContent = async () => {
     try {
       setIsLoading(true);
+
+      if (!isSupabaseConfigured) {
+        setContent(defaultContent);
+        setSettings(defaultSettings);
+        return;
+      }
 
       // 创建带超时的 fetch 辅助函数
       const fetchWithTimeout = async <T, F>(
