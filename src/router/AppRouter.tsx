@@ -1,8 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { LanguageProvider } from '../i18n/LanguageContext';
 import { CMSProvider } from '../cms/CMSContext';
-import { Layout } from '../components/Layout/Layout';
-import { ScrollToTop } from '../components/ScrollToTop';
+import { Layout } from '../components/layout/Layout';
+import { ScrollToTop } from '../components/layout/ScrollToTop';
 import { Home } from '../pages/Home';
 import { CaseStudy } from '../pages/CaseStudy';
 import { Services } from '../pages/Services';

@@ -1,44 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useCMS } from '../cms/CMSContext';
+import { useLanguage } from '../i18n/LanguageContext';
+import { fadeInUp, staggerContainer, staggerItem } from '../shared/animations';
 import './PhotoGallery.css';
-
-// Animation variants
-const fadeInUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: [0.25, 0.1, 0.25, 1],
-    },
-  },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const staggerItem = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 0.1, 0.25, 1],
-    },
-  },
-};
 
 // Compact Hero Section - 60vh height, full width
 function HeroSection({ backgroundImage, title = "Welcome to Jy's Channel", subtitle = "Explore · Create · Share" }: {
@@ -103,13 +69,19 @@ function PhotoGallery({ photos }: { photos: string[] }) {
     'https://images.unsplash.com/photo-1504257432389-52343af06ae3?auto=format&fit=crop&q=80&w=800',
   ];
 
+  // Larger spread radius & bigger scales for visible scattered photos
   const scatterPositions = [
-    { x: -180, y: -80, rotate: -12, scale: 0.85, zIndex: 5 },
-    { x: 160, y: -60, rotate: 8, scale: 0.9, zIndex: 6 },
-    { x: -140, y: 100, rotate: -5, scale: 0.8, zIndex: 4 },
-    { x: 190, y: 90, rotate: 15, scale: 0.82, zIndex: 5 },
-    { x: 0, y: -140, rotate: 3, scale: 0.88, zIndex: 7 },
+    { x: -200, y: -90, rotate: -14, scale: 0.95, zIndex: 5 },
+    { x: 180, y: -70, rotate: 10, scale: 1.0, zIndex: 6 },
+    { x: -160, y: 120, rotate: -6, scale: 0.9, zIndex: 4 },
+    { x: 210, y: 100, rotate: 16, scale: 0.92, zIndex: 5 },
+    { x: 10, y: -160, rotate: 4, scale: 0.98, zIndex: 7 },
   ];
+
+  const handlePhotoClick = (index: number) => {
+    setMainIndex(index);
+    // Keep hover state so user can keep browsing
+  };
 
   return (
     <div
@@ -117,14 +89,22 @@ function PhotoGallery({ photos }: { photos: string[] }) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className={`main-photo ${isHovered ? 'main-photo--scattered' : ''}`}>
-        <img
-          src={displayPhotos[mainIndex]}
-          alt="Portrait"
-          className="main-photo__image"
-          referrerPolicy="no-referrer"
-          loading="eager"
-        />
+      {/* Main Photo with crossfade on switch */}
+      <div className="main-photo">
+        <AnimatePresence mode="wait">
+          <motion.img
+            key={mainIndex}
+            src={displayPhotos[mainIndex]}
+            alt="Portrait"
+            className="main-photo__image"
+            referrerPolicy="no-referrer"
+            loading="eager"
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: isHovered ? 0.88 : 1 }}
+            exit={{ opacity: 0, scale: 0.92 }}
+            transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
+          />
+        </AnimatePresence>
       </div>
 
       {displayPhotos.map((photo, index) => {
@@ -133,28 +113,35 @@ function PhotoGallery({ photos }: { photos: string[] }) {
 
         return (
           <motion.div
-            key={index}
+            key={photo + index}
             className="scatter-photo"
             initial={false}
             animate={{
               x: isHovered ? pos.x : 0,
               y: isHovered ? pos.y : 0,
               rotate: isHovered ? pos.rotate : 0,
-              scale: isHovered ? pos.scale : 0.5,
+              scale: isHovered ? pos.scale : 0.55,
               opacity: isHovered ? 1 : 0,
+              zIndex: pos.zIndex,
+            }}
+            whileHover={{
+              scale: 1.08,
+              rotate: 0,
+              zIndex: 50,
+              transition: { duration: 0.2 },
             }}
             transition={{
               type: "spring",
-              stiffness: 300,
-              damping: 25,
-              delay: isHovered ? index * 0.03 : 0,
+              stiffness: 180,
+              damping: 22,
+              mass: 0.8,
+              delay: isHovered ? index * 0.04 : 0,
             }}
             style={{
               position: 'absolute',
-              zIndex: pos.zIndex,
               cursor: 'pointer',
             }}
-            onClick={() => setMainIndex(index)}
+            onClick={() => handlePhotoClick(index)}
           >
             <img
               src={photo}
@@ -218,6 +205,7 @@ function ProjectCard({ to, imageSrc, imageAlt, title, category, viewProject }: P
 
 export function Home() {
   const { content, isLoading } = useCMS();
+  const { language } = useLanguage();
 
   if (isLoading) {
     return (
@@ -227,13 +215,25 @@ export function Home() {
     );
   }
 
+  const isZh = language === 'zh';
+  const heroTitle = isZh ? content.heroTitleZh : content.heroTitle;
+  const heroSubtitle = isZh ? content.heroSubtitleZh : content.heroSubtitle;
+  const aboutTitle = isZh ? content.aboutTitleZh : content.aboutTitle;
+  const aboutParagraphs = isZh ? content.aboutParagraphsZh : content.aboutParagraphs;
+  const getInTouch = isZh ? content.getInTouchZh : content.getInTouch;
+  const viewResume = isZh ? content.viewResumeZh : content.viewResume;
+  const portfolioLabel = isZh ? content.portfolioLabelZh : content.portfolioLabel;
+  const portfolioTitle = isZh ? content.portfolioTitleZh : content.portfolioTitle;
+  const portfolioDesc = isZh ? content.portfolioDescZh : content.portfolioDesc;
+  const viewProject = isZh ? content.viewProjectZh : content.viewProject;
+
   return (
     <main className="w-full">
       {/* Hero Section */}
       <HeroSection
         backgroundImage={content.heroBackground}
-        title={content.heroTitle}
-        subtitle={content.heroSubtitle}
+        title={heroTitle}
+        subtitle={heroSubtitle}
       />
 
       {/* About Section - Below the fold */}
@@ -262,11 +262,11 @@ export function Home() {
                 variants={staggerItem}
                 className="font-serif italic text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-tight mb-8 text-stone-900"
               >
-                {content.aboutTitle}
+                {aboutTitle}
               </motion.h2>
 
               <div className="space-y-5 text-[16px] text-stone-600 leading-[1.8]">
-                {content.aboutParagraphs.slice(0, 3).map((text, index) => (
+                {aboutParagraphs.slice(0, 3).map((text, index) => (
                   <motion.p key={index} variants={staggerItem}>
                     {text}
                   </motion.p>
@@ -278,13 +278,13 @@ export function Home() {
                   to="/contact"
                   className="bg-stone-900 text-white px-8 py-4 text-[11px] font-semibold tracking-[0.15em] uppercase hover:bg-stone-800 transition-colors rounded-md"
                 >
-                  {content.getInTouch}
+                  {getInTouch}
                 </Link>
                 <Link
                   to="/resume"
                   className="border border-stone-300 px-8 py-4 text-[11px] font-semibold tracking-[0.15em] uppercase text-stone-600 hover:border-stone-900 hover:text-stone-900 transition-colors rounded-md"
                 >
-                  {content.viewResume}
+                  {viewResume}
                 </Link>
               </motion.div>
             </motion.div>
@@ -308,13 +308,13 @@ export function Home() {
                   variants={staggerItem}
                   className="block text-[11px] font-semibold tracking-[0.3em] uppercase text-stone-400 mb-6"
                 >
-                  {content.portfolioLabel}
+                  {portfolioLabel}
                 </motion.span>
                 <motion.h2
                   variants={staggerItem}
                   className="font-serif italic text-4xl md:text-5xl lg:text-6xl text-stone-900 leading-[1.1]"
                 >
-                  {content.portfolioTitle}
+                  {portfolioTitle}
                 </motion.h2>
               </motion.div>
 
@@ -326,7 +326,7 @@ export function Home() {
                 variants={fadeInUp}
               >
                 <p className="text-[14px] text-stone-500 leading-[1.8]">
-                  {content.portfolioDesc}
+                  {portfolioDesc}
                 </p>
               </motion.div>
             </div>
@@ -350,11 +350,11 @@ export function Home() {
                 <ProjectCard
                   to={`/project/${project.slug}`}
                   imageSrc={project.image_url || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=1000'}
-                  imageAlt={project.title}
-                  title={project.title}
-                  category={project.category}
+                  imageAlt={isZh ? project.title_zh || project.title : project.title}
+                  title={isZh ? project.title_zh || project.title : project.title}
+                  category={isZh ? project.category_zh || project.category : project.category}
                   index={index}
-                  viewProject={content.viewProject}
+                  viewProject={viewProject}
                 />
               </motion.div>
             ))}
@@ -365,20 +365,20 @@ export function Home() {
                   to="/project/urban-mobility"
                   imageSrc="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=1000"
                   imageAlt="Urban Transit"
-                  title="Urban Mobility"
-                  category="UI/UX Design • 2023"
+                  title={isZh ? '城市出行' : 'Urban Mobility'}
+                  category={isZh ? 'UI/UX 设计 • 2023' : 'UI/UX Design • 2023'}
                   index={0}
-                  viewProject={content.viewProject}
+                  viewProject={viewProject}
                 />
                 <motion.div className="md:mt-24" variants={staggerItem}>
                   <ProjectCard
                     to="/project/fintech-dashboard"
                     imageSrc="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1000"
                     imageAlt="Fintech Dashboard"
-                    title="Fintech Dashboard"
-                    category="Product Design • 2023"
+                    title={isZh ? '金融科技仪表盘' : 'Fintech Dashboard'}
+                    category={isZh ? '产品设计 • 2023' : 'Product Design • 2023'}
                     index={1}
-                    viewProject={content.viewProject}
+                    viewProject={viewProject}
                   />
                 </motion.div>
               </>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 

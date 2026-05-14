@@ -1,6 +1,9 @@
+import type * as React from 'react';
 import { motion } from 'framer-motion';
 import { useCMS } from '../cms/CMSContext';
+import { useLanguage } from '../i18n/LanguageContext';
 import { Palette, Layers, Search, Globe, Sparkles, Zap } from 'lucide-react';
+import { fadeInUp, staggerContainer, staggerItem } from '../shared/animations';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Palette,
@@ -11,43 +14,9 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Zap,
 };
 
-const fadeInUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: [0.25, 0.1, 0.25, 1],
-    },
-  },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const staggerItem = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 0.1, 0.25, 1],
-    },
-  },
-};
-
 export function Services() {
   const { content, isLoading } = useCMS();
+  const { language } = useLanguage();
 
   if (isLoading) {
     return (
@@ -56,6 +25,8 @@ export function Services() {
       </div>
     );
   }
+
+  const isZh = language === 'zh';
 
   return (
     <main className="w-full">
@@ -72,13 +43,13 @@ export function Services() {
               variants={staggerItem}
               className="block text-[11px] font-semibold tracking-[0.3em] uppercase text-stone-400 mb-6"
             >
-              {content.servicesWhatIDo}
+              {isZh ? content.servicesWhatIDoZh : content.servicesWhatIDo}
             </motion.span>
             <motion.h1
               variants={staggerItem}
               className="font-serif italic text-5xl md:text-7xl lg:text-8xl text-stone-900 leading-[1.1]"
             >
-              {content.servicesTitle}
+              {isZh ? content.servicesTitleZh : content.servicesTitle}
             </motion.h1>
           </motion.div>
         </div>
@@ -118,10 +89,10 @@ export function Services() {
                   {/* Content */}
                   <div className="md:col-span-9">
                     <h2 className="font-serif italic text-2xl md:text-3xl mb-4 text-stone-900">
-                      {service.title}
+                      {isZh ? service.title_zh || service.title : service.title}
                     </h2>
                     <p className="text-[15px] text-stone-600 leading-[1.8] max-w-2xl">
-                      {service.description}
+                      {isZh ? service.description_zh || service.description : service.description}
                     </p>
                   </div>
                 </motion.div>
@@ -131,7 +102,7 @@ export function Services() {
             {/* Fallback if no services */}
             {content.services.length === 0 && (
               <div className="text-center py-12 text-stone-400">
-                No services configured yet.
+                {isZh ? '尚未配置服务内容。' : 'No services configured yet.'}
               </div>
             )}
           </motion.div>
@@ -148,16 +119,16 @@ export function Services() {
           variants={fadeInUp}
         >
           <h2 className="font-serif italic text-3xl md:text-4xl text-white mb-6">
-            {content.servicesCtaTitle}
+            {isZh ? content.servicesCtaTitleZh : content.servicesCtaTitle}
           </h2>
           <p className="text-stone-400 text-[15px] leading-[1.8] mb-10 max-w-lg mx-auto">
-            {content.servicesCtaDesc}
+            {isZh ? content.servicesCtaDescZh : content.servicesCtaDesc}
           </p>
           <a
             href="/contact"
             className="inline-block bg-white text-stone-900 px-10 py-4 text-[11px] font-semibold tracking-[0.15em] uppercase hover:bg-stone-100 transition-colors rounded-md"
           >
-            {content.servicesCtaButton}
+            {isZh ? content.servicesCtaButtonZh : content.servicesCtaButton}
           </a>
         </motion.div>
       </section>

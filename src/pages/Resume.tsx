@@ -1,42 +1,9 @@
+import type * as React from 'react';
 import { motion } from 'framer-motion';
 import { useCMS } from '../cms/CMSContext';
 import { useLanguage } from '../i18n/LanguageContext';
 import { Download, Eye, GraduationCap, Briefcase, Trophy, Users } from 'lucide-react';
-
-const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 0.1, 0.25, 1],
-    },
-  },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.08,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const staggerItem = {
-  hidden: { opacity: 0, y: 15 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.4,
-      ease: [0.25, 0.1, 0.25, 1],
-    },
-  },
-};
+import { fadeInUpCompact, staggerContainerCompact, staggerItemCompact } from '../shared/animations';
 
 interface ResumeItem {
   title: string;
@@ -58,12 +25,12 @@ function Section({ icon, title, items, index }: SectionProps) {
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.15 }}
-      variants={staggerContainer}
+      variants={staggerContainerCompact}
       className="border-t border-stone-200 py-10 md:py-12"
     >
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-12">
         {/* Left: Section Title */}
-        <motion.div variants={staggerItem} className="md:col-span-3">
+        <motion.div variants={staggerItemCompact} className="md:col-span-3">
           <div className="flex items-center gap-2 text-stone-400">
             {icon}
             <span className="text-[11px] font-semibold tracking-[0.2em] uppercase">
@@ -78,7 +45,7 @@ function Section({ icon, title, items, index }: SectionProps) {
             {items.map((item, idx) => (
               <motion.div
                 key={idx}
-                variants={staggerItem}
+                variants={staggerItemCompact}
                 className="group"
               >
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-1 mb-1">
@@ -114,40 +81,42 @@ export function Resume() {
     );
   }
 
+  const isZh = language === 'zh';
+
   // Use CMS data if available, otherwise fallback to translations
   const educationList: ResumeItem[] = content.resumeEducations?.length > 0
     ? content.resumeEducations.map((edu: any) => ({
-        title: edu.degree,
-        subtitle: edu.school,
+        title: isZh ? edu.degree_zh || edu.degree : edu.degree,
+        subtitle: isZh ? edu.school_zh || edu.school : edu.school,
         period: edu.period,
-        description: edu.description
+        description: isZh ? edu.description_zh || edu.description : edu.description
       }))
     : t.resume.educationList;
 
   const internshipList: ResumeItem[] = content.resumeInternships?.length > 0
     ? content.resumeInternships.map((item: any) => ({
-        title: item.title,
-        subtitle: item.company,
+        title: isZh ? item.title_zh || item.title : item.title,
+        subtitle: isZh ? item.company_zh || item.company : item.company,
         period: item.period,
-        description: item.description
+        description: isZh ? item.description_zh || item.description : item.description
       }))
     : t.resume.internshipList;
 
   const competitionList: ResumeItem[] = content.resumeCompetitions?.length > 0
     ? content.resumeCompetitions.map((item: any) => ({
-        title: item.title,
-        subtitle: item.organizer,
+        title: isZh ? item.title_zh || item.title : item.title,
+        subtitle: isZh ? item.organizer_zh || item.organizer : item.organizer,
         period: item.period,
-        description: item.description
+        description: isZh ? item.description_zh || item.description : item.description
       }))
     : t.resume.competitionList;
 
   const campusList: ResumeItem[] = content.resumeCampus?.length > 0
     ? content.resumeCampus.map((item: any) => ({
-        title: item.title,
-        subtitle: item.organization,
+        title: isZh ? item.title_zh || item.title : item.title,
+        subtitle: isZh ? item.organization_zh || item.organization : item.organization,
         period: item.period,
-        description: item.description
+        description: isZh ? item.description_zh || item.description : item.description
       }))
     : t.resume.campusList;
 
@@ -162,26 +131,26 @@ export function Resume() {
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            variants={staggerContainer}
+            variants={staggerContainerCompact}
             className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"
           >
             <div>
-              <motion.div variants={staggerItem} className="mb-3">
+              <motion.div variants={staggerItemCompact} className="mb-3">
                 <span className="inline-flex items-center px-3 py-1.5 bg-stone-100 text-stone-600 text-[10px] font-medium tracking-wider uppercase rounded-full">
                   {t.resume.subtitle}
                 </span>
               </motion.div>
 
               <motion.h1
-                variants={staggerItem}
+                variants={staggerItemCompact}
                 className="font-serif italic text-3xl md:text-4xl text-stone-900"
               >
-                {language === 'zh' ? '个人简历' : 'Resume'}
+                {isZh ? '个人简历' : 'Resume'}
               </motion.h1>
             </div>
 
             {/* PDF Actions */}
-            <motion.div variants={staggerItem} className="flex items-center gap-2">
+            <motion.div variants={staggerItemCompact} className="flex items-center gap-2">
               {hasResumeFile ? (
                 <>
                   <a

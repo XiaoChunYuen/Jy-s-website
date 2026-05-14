@@ -1,7 +1,18 @@
 import { motion } from 'framer-motion';
 import { useCMS } from '../cms/CMSContext';
 import { useLanguage } from '../i18n/LanguageContext';
-import { Mail, ArrowUpRight } from 'lucide-react';
+import { Mail, ArrowUpRight, Linkedin, Instagram, Dribbble, Github, Twitter, Youtube, Globe } from 'lucide-react';
+import { fadeInUp, staggerContainer, staggerItem } from '../shared/animations';
+
+const iconMap = {
+  Linkedin,
+  Instagram,
+  Dribbble,
+  Github,
+  Twitter,
+  Youtube,
+  Globe,
+};
 
 // 电话图标 - 蓝色
 function PhoneIcon({ className }: { className?: string }) {
@@ -30,44 +41,9 @@ function XiaohongshuIcon({ className }: { className?: string }) {
   );
 }
 
-const fadeInUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: [0.25, 0.1, 0.25, 1],
-    },
-  },
-};
-
-const staggerContainer = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-      delayChildren: 0.1,
-    },
-  },
-};
-
-const staggerItem = {
-  hidden: { opacity: 0, y: 30 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: [0.25, 0.1, 0.25, 1],
-    },
-  },
-};
-
 export function Contact() {
   const { content, isLoading } = useCMS();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   if (isLoading) {
     return (
@@ -76,6 +52,8 @@ export function Contact() {
       </div>
     );
   }
+
+  const isZh = language === 'zh';
 
   return (
     <main className="w-full">
@@ -92,19 +70,19 @@ export function Contact() {
               variants={staggerItem}
               className="block text-[11px] font-semibold tracking-[0.3em] uppercase text-stone-400 mb-6"
             >
-              {content.contactLetsConnect}
+              {isZh ? content.contactLetsConnectZh : content.contactLetsConnect}
             </motion.span>
             <motion.h1
               variants={staggerItem}
               className="font-serif italic text-5xl md:text-7xl lg:text-8xl text-stone-900 leading-[1.1] mb-8"
             >
-              {content.contactTitle}
+              {isZh ? content.contactTitleZh : content.contactTitle}
             </motion.h1>
             <motion.p
               variants={staggerItem}
               className="text-[16px] text-stone-600 leading-[1.8] max-w-lg mx-auto"
             >
-              {content.contactDesc}
+              {isZh ? content.contactDescZh : content.contactDesc}
             </motion.p>
           </motion.div>
         </div>
@@ -126,9 +104,9 @@ export function Contact() {
                 <div className="w-12 h-12 rounded-full bg-stone-900 flex items-center justify-center mb-6">
                   <Mail className="w-5 h-5 text-white" />
                 </div>
-                <h2 className="font-serif italic text-2xl text-stone-900 mb-4">{content.contactEmailLabel}</h2>
+                <h2 className="font-serif italic text-2xl text-stone-900 mb-4">{isZh ? content.contactEmailLabelZh : content.contactEmailLabel}</h2>
                 <p className="text-[14px] text-stone-500 mb-6 leading-[1.6]">
-                  {content.contactEmailDesc}
+                  {isZh ? content.contactEmailDescZh : content.contactEmailDesc}
                 </p>
                 <a
                   href={`mailto:${content.contactEmail}`}
@@ -143,9 +121,9 @@ export function Contact() {
             {/* Social Links Card */}
             <motion.div variants={staggerItem}>
               <div className="bg-stone-50 p-8 md:p-10 rounded-lg h-full">
-                <h2 className="font-serif italic text-2xl text-stone-900 mb-4">{content.contactSocialLabel}</h2>
+                <h2 className="font-serif italic text-2xl text-stone-900 mb-4">{isZh ? content.contactSocialLabelZh : content.contactSocialLabel}</h2>
                 <p className="text-[14px] text-stone-500 mb-6 leading-[1.6]">
-                  {content.contactSocialDesc}
+                  {isZh ? content.contactSocialDescZh : content.contactSocialDesc}
                 </p>
                 <div className="space-y-3">
                   {content.socialLinks.map((link) => {
@@ -212,9 +190,9 @@ export function Contact() {
           viewport={{ once: true, amount: 0.5 }}
           variants={fadeInUp}
         >
-          <div className="font-serif italic text-3xl text-stone-800 mb-8">{content.footerTitle}</div>
+          <div className="font-serif italic text-3xl text-stone-800 mb-8">{isZh ? content.footerTitleZh : content.footerTitle}</div>
           <div className="text-[11px] font-semibold tracking-[0.2em] uppercase text-stone-400">
-            {content.footerCopyright}
+            {isZh ? content.footerCopyrightZh : content.footerCopyright}
           </div>
         </motion.div>
       </footer>

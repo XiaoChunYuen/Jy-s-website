@@ -1,20 +1,43 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Jy's Channel Portfolio
 
-# Run and deploy your AI Studio app
+A personal portfolio website built with Vite, React, TypeScript, Tailwind CSS, Framer Motion, and Supabase CMS.
 
-This contains everything you need to run your app locally.
+## Local Development
 
-View your app in AI Studio: https://ai.studio/apps/e6ad319b-e173-4ea1-8f83-c96793dc7f5c
+Install dependencies:
 
-## Run Locally
+```bash
+npm install
+```
 
-**Prerequisites:**  Node.js
+Start the development server:
 
+```bash
+npm run dev
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Open:
+
+```text
+http://localhost:3000
+```
+
+## Build
+
+```bash
+npm run lint
+npm run build
+```
+
+## Deployment
+
+The recommended deployment target is Cloudflare Pages.
+
+Use:
+
+```text
+Build command: npm run build
+Build output directory: dist
+```
+
+See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) for the full deployment checklist.

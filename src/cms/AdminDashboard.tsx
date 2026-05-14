@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import type * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { compressImage } from '../lib/imageUtils';
 import {
@@ -500,7 +501,7 @@ function AboutEditor() {
 
     const uploadedUrls: string[] = [];
 
-    for (const file of Array.from(files)) {
+    for (const file of Array.from(files) as File[]) {
       try {
         // 压缩图片
         const compressedFile = await compressImage(file, {
