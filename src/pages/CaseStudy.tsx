@@ -5,6 +5,7 @@ import { ChevronRight, ArrowRight, ArrowLeft, Eye } from 'lucide-react';
 import { useCMS } from '../cms/CMSContext';
 import { useLanguage } from '../i18n/LanguageContext';
 import { fadeInUp, staggerContainer, staggerItem } from '../shared/animations';
+import { siteAssets } from '../shared/siteAssets';
 
 export function CaseStudy() {
   const { slug } = useParams<{ slug: string }>();
@@ -25,7 +26,7 @@ export function CaseStudy() {
 
   // Fallback data if no case study found
   const heroTitle = (isZh ? caseStudy?.hero_title_zh || caseStudy?.hero_title : caseStudy?.hero_title) || (isZh ? '城市交通的未来' : 'The Future of Urban Transit');
-  const heroImage = caseStudy?.hero_image || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=2000';
+  const heroImage = caseStudy?.hero_image || siteAssets.projects.urbanMobility;
   const duration = (isZh ? caseStudy?.duration_zh || caseStudy?.duration : caseStudy?.duration) || (isZh ? '12周 (2023秋季)' : '12 Weeks (Fall 2023)');
   const role = (isZh ? caseStudy?.role_zh || caseStudy?.role : caseStudy?.role) || (isZh ? '首席 UI/UX 设计师' : 'Lead UI/UX Designer');
   const platform = (isZh ? caseStudy?.platform_zh || caseStudy?.platform : caseStudy?.platform) || (isZh ? 'iOS 与 Web 仪表盘' : 'iOS & Web Dashboard');
@@ -51,8 +52,8 @@ export function CaseStudy() {
   const ctaTitle = (isZh ? caseStudy?.cta_title_zh || caseStudy?.cta_title : caseStudy?.cta_title) || (isZh ? '想深入了解？' : 'Want the deep dive?');
   const ctaButtonText = (isZh ? caseStudy?.cta_button_text_zh || caseStudy?.cta_button_text : caseStudy?.cta_button_text) || (isZh ? '查看完整报告' : 'View Full Report');
   const galleryImages = caseStudy?.gallery_images || [
-    'https://images.unsplash.com/photo-1618761714954-0b8cd0026356?auto=format&fit=crop&q=80&w=1000',
-    'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1000'
+    siteAssets.gallery.primary,
+    siteAssets.gallery.secondary,
   ];
   const galleryCaptions = (isZh ? caseStudy?.gallery_captions_zh?.length ? caseStudy.gallery_captions_zh : caseStudy?.gallery_captions : caseStudy?.gallery_captions) || (
     isZh ? ['阶段 01：信息架构', '阶段 02：高保真界面'] : ['Phase 01: Information Architecture', 'Phase 02: High-Fidelity Interface']
@@ -120,7 +121,7 @@ export function CaseStudy() {
                 src={heroImage}
                 alt={heroTitle}
                 className="w-full h-[35vh] md:h-[45vh] max-h-[420px] object-cover"
-                referrerPolicy="no-referrer"
+                fetchPriority="high"
               />
               {/* Bottom gradient overlay for smooth transition to content */}
               <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-stone-50/60 to-transparent" />
@@ -256,7 +257,7 @@ export function CaseStudy() {
                           src={img}
                           alt={galleryCaptions[index] || `Gallery ${index + 1}`}
                           className="w-full aspect-[4/5] object-cover transition-transform duration-700 group-hover:scale-[1.02]"
-                          referrerPolicy="no-referrer"
+                          loading="lazy"
                         />
                       </div>
                       <figcaption className="text-[11px] text-stone-400 tracking-wide">
@@ -328,7 +329,7 @@ export function CaseStudy() {
                       src={src}
                       alt={galleryCaptions[index] || `Gallery ${index + 1}`}
                       className="w-full aspect-[16/10] object-cover transition-all duration-700 group-hover:scale-[1.02]"
-                      referrerPolicy="no-referrer"
+                      loading="lazy"
                     />
                   </div>
                   <figcaption className="text-[11px] font-medium tracking-[0.1em] uppercase text-stone-500">

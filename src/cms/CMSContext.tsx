@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import {
   isSupabaseConfigured,
-  supabase,
   type Project,
   type ResumeExperience,
   type ResumeEducation,
@@ -14,6 +13,7 @@ import {
   type CaseStudy,
   type SiteSettings
 } from '../lib/supabase';
+import { getSupabaseClient } from '../lib/supabaseClient';
 import { defaultSettings, defaultContent, type CMSContent, type SiteSettingsMap } from './defaults';
 
 interface CMSContextType {
@@ -37,6 +37,13 @@ export function CMSProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
 
       if (!isSupabaseConfigured) {
+        setContent(defaultContent);
+        setSettings(defaultSettings);
+        return;
+      }
+
+      const supabase = await getSupabaseClient();
+      if (!supabase) {
         setContent(defaultContent);
         setSettings(defaultSettings);
         return;

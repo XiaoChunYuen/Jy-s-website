@@ -29,7 +29,7 @@ import {
   Menu,
   LayoutTemplate
 } from 'lucide-react';
-import { supabase } from '../lib/supabase';
+import { supabase } from '../lib/supabaseAdmin';
 import type { Project, Service, ResumeExperience, ResumeEducation, ResumeSkill, SocialLink, CaseStudy } from '../lib/supabase';
 
 interface Tab {

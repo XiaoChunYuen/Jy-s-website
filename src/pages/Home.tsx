@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useCMS } from '../cms/CMSContext';
 import { useLanguage } from '../i18n/LanguageContext';
 import { fadeInUp, staggerContainer, staggerItem } from '../shared/animations';
+import { siteAssets } from '../shared/siteAssets';
 import './PhotoGallery.css';
 
 // Compact Hero Section - 60vh height, full width
@@ -21,6 +22,7 @@ function HeroSection({ backgroundImage, title = "Welcome to Jy's Channel", subti
         <img
           src={backgroundImage}
           alt="Hero background"
+          fetchPriority="high"
           className={`w-full h-full object-cover transition-all duration-1000 ${
             isLoaded ? 'scale-100 opacity-100' : 'scale-105 opacity-0'
           }`}
@@ -61,13 +63,7 @@ function PhotoGallery({ photos }: { photos: string[] }) {
   const [mainIndex, setMainIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
-  const displayPhotos = photos.length > 0 ? photos : [
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800',
-    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=800',
-    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=800',
-    'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=800',
-    'https://images.unsplash.com/photo-1504257432389-52343af06ae3?auto=format&fit=crop&q=80&w=800',
-  ];
+  const displayPhotos = photos.length > 0 ? photos : [...siteAssets.aboutPhotos];
 
   // Larger spread radius & bigger scales for visible scattered photos
   const scatterPositions = [
@@ -97,7 +93,6 @@ function PhotoGallery({ photos }: { photos: string[] }) {
             src={displayPhotos[mainIndex]}
             alt="Portrait"
             className="main-photo__image"
-            referrerPolicy="no-referrer"
             loading="eager"
             initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: isHovered ? 0.88 : 1 }}
@@ -147,7 +142,6 @@ function PhotoGallery({ photos }: { photos: string[] }) {
               src={photo}
               alt={`Portrait ${index + 1}`}
               className="scatter-photo__image"
-              referrerPolicy="no-referrer"
               loading="lazy"
             />
           </motion.div>
@@ -173,12 +167,12 @@ function ProjectCard({ to, imageSrc, imageAlt, title, category, viewProject }: P
     <motion.div variants={staggerItem}>
       <Link to={to} className="group block">
         <div className="overflow-hidden mb-6 bg-stone-100 relative aspect-[4/3]">
-          <img
-            src={imageSrc}
-            alt={imageAlt}
-            className="w-full h-full object-cover grayscale opacity-90 group-hover:scale-105 group-hover:grayscale-0 transition-all duration-700"
-            referrerPolicy="no-referrer"
-          />
+            <img
+              src={imageSrc}
+              alt={imageAlt}
+              className="w-full h-full object-cover grayscale opacity-90 group-hover:scale-105 group-hover:grayscale-0 transition-all duration-700"
+              loading="lazy"
+            />
           <div className="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/20 transition-all duration-500 flex items-center justify-center">
             <span className="text-white text-[11px] font-semibold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
               {viewProject}
@@ -349,7 +343,7 @@ export function Home() {
               >
                 <ProjectCard
                   to={`/project/${project.slug}`}
-                  imageSrc={project.image_url || 'https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=1000'}
+                  imageSrc={project.image_url || siteAssets.projects.urbanMobility}
                   imageAlt={isZh ? project.title_zh || project.title : project.title}
                   title={isZh ? project.title_zh || project.title : project.title}
                   category={isZh ? project.category_zh || project.category : project.category}
@@ -363,7 +357,7 @@ export function Home() {
               <>
                 <ProjectCard
                   to="/project/urban-mobility"
-                  imageSrc="https://images.unsplash.com/photo-1515162816999-a0c47dc192f7?auto=format&fit=crop&q=80&w=1000"
+                  imageSrc={siteAssets.projects.urbanMobility}
                   imageAlt="Urban Transit"
                   title={isZh ? '城市出行' : 'Urban Mobility'}
                   category={isZh ? 'UI/UX 设计 • 2023' : 'UI/UX Design • 2023'}
@@ -373,7 +367,7 @@ export function Home() {
                 <motion.div className="md:mt-24" variants={staggerItem}>
                   <ProjectCard
                     to="/project/fintech-dashboard"
-                    imageSrc="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=1000"
+                    imageSrc={siteAssets.projects.fintechDashboard}
                     imageAlt="Fintech Dashboard"
                     title={isZh ? '金融科技仪表盘' : 'Fintech Dashboard'}
                     category={isZh ? '产品设计 • 2023' : 'Product Design • 2023'}

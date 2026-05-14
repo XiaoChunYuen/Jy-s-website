@@ -10,6 +10,7 @@ import type {
   SocialLink,
   CaseStudy,
 } from '../lib/supabase';
+import { siteAssets } from '../shared/siteAssets';
 
 export type SiteSettingsMap = Record<string, string>;
 
@@ -137,7 +138,7 @@ export interface CMSContent {
 
 export const defaultSettings: SiteSettingsMap = {
   // Hero
-  hero_background: 'https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&q=80&w=2000',
+  hero_background: siteAssets.hero,
   hero_title: "Welcome to Jy's Channel",
   hero_title_zh: '欢迎来到 Jy 的频道',
   hero_subtitle: 'Explore \u00B7 Create \u00B7 Share',
@@ -265,13 +266,7 @@ export const defaultContent: CMSContent = {
     '目前，我专注于为复杂的企业工具和消费者应用程序创建优雅的、以用户为中心的体验。',
     '当我不沉迷于像素时，你会发现我在探索复古排版、冲泡特色咖啡或拍摄粗野主义建筑。',
   ],
-  aboutPhotos: [
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=800',
-    'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=800',
-    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=800',
-    'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?auto=format&fit=crop&q=80&w=800',
-    'https://images.unsplash.com/photo-1504257432389-52343af06ae3?auto=format&fit=crop&q=80&w=800',
-  ],
+  aboutPhotos: [...siteAssets.aboutPhotos],
 
   // Portfolio Section
   portfolioLabel: defaultSettings.portfolio_label,
