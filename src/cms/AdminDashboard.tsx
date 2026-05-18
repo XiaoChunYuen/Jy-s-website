@@ -50,6 +50,60 @@ const tabs: Tab[] = [
   { id: 'contact', label: 'Contact', icon: <Globe className="w-4 h-4" /> },
 ];
 
+type SiteSettingInput = {
+  key: string;
+  value: string;
+  type?: 'text' | 'image' | 'background' | 'file';
+};
+
+const isPersistedId = (id: string) => !id.startsWith('temp-');
+
+const toSlug = (value: string, fallback: string) => {
+  const slug = value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+
+  return slug || fallback;
+};
+
+const loadSiteSettings = async (keys: string[]) => {
+  const { data, error } = await supabase
+    .from('site_settings')
+    .select('key,value')
+    .in('key', keys);
+
+  if (error) {
+    throw error;
+  }
+
+  return (data || []).reduce<Record<string, string>>((acc, setting) => {
+    acc[setting.key] = setting.value || '';
+    return acc;
+  }, {});
+};
+
+const saveSiteSettings = async (settings: SiteSettingInput[]) => {
+  const { error } = await supabase
+    .from('site_settings')
+    .upsert(
+      settings.map((setting) => ({
+        key: setting.key,
+        value: setting.value,
+        type: setting.type || 'text',
+      })),
+      { onConflict: 'key' }
+    );
+
+  if (error) {
+    throw error;
+  }
+};
+
+const buttonClass =
+  'inline-flex items-center gap-2 bg-stone-900 text-white px-5 py-3 text-[13px] font-medium rounded-md hover:bg-stone-800 transition-colors disabled:opacity-50';
+
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('site');
   const [isSaving, setIsSaving] = useState(false);
@@ -153,6 +207,7 @@ export function AdminDashboard() {
 // Site Settings Editor (Navigation & Footer)
 // ============================================
 function SiteSettingsEditor() {
+  const [isSaving, setIsSaving] = useState(false);
   const [nav, setNav] = useState({
     work: 'Work', workZh: '作品',
     about: 'About', aboutZh: '关于',
@@ -165,6 +220,90 @@ function SiteSettingsEditor() {
     copyright: '© 2024 Student Portfolio', copyrightZh: '© 2024 学生作品集',
     author: 'Alex Chen – Designer', authorZh: 'Alex Chen – 设计师',
   });
+
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        const settings = await loadSiteSettings([
+          'nav_work',
+          'nav_work_zh',
+          'nav_about',
+          'nav_about_zh',
+          'nav_services',
+          'nav_services_zh',
+          'nav_contact',
+          'nav_contact_zh',
+          'nav_resume',
+          'nav_resume_zh',
+          'footer_title',
+          'footer_title_zh',
+          'footer_copyright',
+          'footer_copyright_zh',
+          'footer_author',
+          'footer_author_zh',
+        ]);
+
+        setNav((current) => ({
+          ...current,
+          work: settings.nav_work ?? current.work,
+          workZh: settings.nav_work_zh ?? current.workZh,
+          about: settings.nav_about ?? current.about,
+          aboutZh: settings.nav_about_zh ?? current.aboutZh,
+          services: settings.nav_services ?? current.services,
+          servicesZh: settings.nav_services_zh ?? current.servicesZh,
+          contact: settings.nav_contact ?? current.contact,
+          contactZh: settings.nav_contact_zh ?? current.contactZh,
+          resume: settings.nav_resume ?? current.resume,
+          resumeZh: settings.nav_resume_zh ?? current.resumeZh,
+        }));
+
+        setFooter((current) => ({
+          ...current,
+          title: settings.footer_title ?? current.title,
+          titleZh: settings.footer_title_zh ?? current.titleZh,
+          copyright: settings.footer_copyright ?? current.copyright,
+          copyrightZh: settings.footer_copyright_zh ?? current.copyrightZh,
+          author: settings.footer_author ?? current.author,
+          authorZh: settings.footer_author_zh ?? current.authorZh,
+        }));
+      } catch (error) {
+        console.error('Error loading site settings:', error);
+        alert('Failed to load site settings: ' + (error as Error).message);
+      }
+    };
+
+    loadContent();
+  }, []);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await saveSiteSettings([
+        { key: 'nav_work', value: nav.work },
+        { key: 'nav_work_zh', value: nav.workZh },
+        { key: 'nav_about', value: nav.about },
+        { key: 'nav_about_zh', value: nav.aboutZh },
+        { key: 'nav_services', value: nav.services },
+        { key: 'nav_services_zh', value: nav.servicesZh },
+        { key: 'nav_contact', value: nav.contact },
+        { key: 'nav_contact_zh', value: nav.contactZh },
+        { key: 'nav_resume', value: nav.resume },
+        { key: 'nav_resume_zh', value: nav.resumeZh },
+        { key: 'footer_title', value: footer.title },
+        { key: 'footer_title_zh', value: footer.titleZh },
+        { key: 'footer_copyright', value: footer.copyright },
+        { key: 'footer_copyright_zh', value: footer.copyrightZh },
+        { key: 'footer_author', value: footer.author },
+        { key: 'footer_author_zh', value: footer.authorZh },
+      ]);
+      alert('Site settings saved successfully!');
+    } catch (error) {
+      console.error('Site settings save error:', error);
+      alert('Failed to save site settings: ' + (error as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="max-w-2xl space-y-8">
@@ -274,6 +413,11 @@ function SiteSettingsEditor() {
           </div>
         </div>
       </div>
+
+      <button onClick={handleSave} disabled={isSaving} className={buttonClass}>
+        <Save className="w-4 h-4" />
+        {isSaving ? 'Saving...' : 'Save Site Settings'}
+      </button>
     </div>
   );
 }
@@ -498,6 +642,7 @@ function AboutEditor() {
   const [paragraphsZh, setParagraphsZh] = useState<string[]>(['']);
   const [photos, setPhotos] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 加载现有数据
@@ -613,6 +758,39 @@ function AboutEditor() {
     setPhotos(photos.filter((_, i) => i !== index));
   };
 
+  const saveAboutContent = async (nextPhotos = photos) => {
+    setIsSaving(true);
+    try {
+      const { data: existing } = await supabase
+        .from('about_content')
+        .select('id')
+        .maybeSingle();
+
+      const saveData = {
+        title,
+        title_zh: titleZh,
+        paragraphs,
+        paragraphs_zh: paragraphsZh,
+        photos: nextPhotos,
+      };
+
+      const { error } = existing?.id
+        ? await supabase.from('about_content').update(saveData).eq('id', existing.id)
+        : await supabase.from('about_content').insert(saveData);
+
+      if (error) {
+        throw error;
+      }
+
+      alert('About content saved successfully!');
+    } catch (error) {
+      console.error('About save error:', error);
+      alert('Failed to save about content: ' + (error as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <div className="max-w-2xl">
       <h2 className="font-serif italic text-3xl text-stone-900 mb-8">About Me</h2>
@@ -708,6 +886,11 @@ function AboutEditor() {
             Add Paragraph
           </button>
         </div>
+
+        <button onClick={() => saveAboutContent()} disabled={isSaving || isLoading} className={buttonClass}>
+          <Save className="w-4 h-4" />
+          {isSaving ? 'Saving...' : 'Save About Content'}
+        </button>
       </div>
     </div>
   );
@@ -717,12 +900,60 @@ function AboutEditor() {
 // Portfolio Editor
 // ============================================
 function PortfolioEditor() {
+  const [isSaving, setIsSaving] = useState(false);
   const [label, setLabel] = useState('');
   const [labelZh, setLabelZh] = useState('');
   const [title, setTitle] = useState('');
   const [titleZh, setTitleZh] = useState('');
   const [desc, setDesc] = useState('');
   const [descZh, setDescZh] = useState('');
+
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        const settings = await loadSiteSettings([
+          'portfolio_label',
+          'portfolio_label_zh',
+          'portfolio_title',
+          'portfolio_title_zh',
+          'portfolio_desc',
+          'portfolio_desc_zh',
+        ]);
+
+        setLabel(settings.portfolio_label || '');
+        setLabelZh(settings.portfolio_label_zh || '');
+        setTitle(settings.portfolio_title || '');
+        setTitleZh(settings.portfolio_title_zh || '');
+        setDesc(settings.portfolio_desc || '');
+        setDescZh(settings.portfolio_desc_zh || '');
+      } catch (error) {
+        console.error('Error loading portfolio settings:', error);
+        alert('Failed to load portfolio settings: ' + (error as Error).message);
+      }
+    };
+
+    loadContent();
+  }, []);
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await saveSiteSettings([
+        { key: 'portfolio_label', value: label },
+        { key: 'portfolio_label_zh', value: labelZh },
+        { key: 'portfolio_title', value: title },
+        { key: 'portfolio_title_zh', value: titleZh },
+        { key: 'portfolio_desc', value: desc },
+        { key: 'portfolio_desc_zh', value: descZh },
+      ]);
+      alert('Portfolio settings saved successfully!');
+    } catch (error) {
+      console.error('Portfolio save error:', error);
+      alert('Failed to save portfolio settings: ' + (error as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="max-w-2xl">
@@ -797,6 +1028,11 @@ function PortfolioEditor() {
             />
           </div>
         </div>
+
+        <button onClick={handleSave} disabled={isSaving} className={buttonClass}>
+          <Save className="w-4 h-4" />
+          {isSaving ? 'Saving...' : 'Save Portfolio Section'}
+        </button>
       </div>
     </div>
   );
@@ -807,7 +1043,29 @@ function PortfolioEditor() {
 // ============================================
 function ProjectsEditor() {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [persistedIds, setPersistedIds] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+
+  const loadProjects = async () => {
+    const { data, error } = await supabase
+      .from('projects')
+      .select('*')
+      .order('order', { ascending: true });
+
+    if (error) {
+      console.error('Error loading projects:', error);
+      alert('Failed to load projects: ' + error.message);
+      return;
+    }
+
+    setProjects(data || []);
+    setPersistedIds((data || []).map((project) => project.id));
+  };
+
+  useEffect(() => {
+    loadProjects();
+  }, []);
 
   const addProject = () => {
     const newProject: Project = {
@@ -848,6 +1106,49 @@ function ProjectsEditor() {
     } else {
       const { data: { publicUrl } } = supabase.storage.from('portfolio-images').getPublicUrl(fileName);
       updateProject(projectId, 'image_url', publicUrl);
+    }
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const currentPersistedIds = projects.filter((project) => isPersistedId(project.id)).map((project) => project.id);
+      const removedIds = persistedIds.filter((id) => !currentPersistedIds.includes(id));
+
+      if (removedIds.length > 0) {
+        const { error } = await supabase.from('projects').delete().in('id', removedIds);
+        if (error) throw error;
+      }
+
+      for (const [index, project] of projects.entries()) {
+        const row = {
+          slug: project.slug || toSlug(project.title || project.title_zh, `project-${index + 1}`),
+          title: project.title,
+          title_zh: project.title_zh,
+          category: project.category,
+          category_zh: project.category_zh,
+          description: project.description,
+          description_zh: project.description_zh,
+          image_url: project.image_url,
+          link: project.link,
+          order: index + 1,
+          is_active: project.is_active,
+        };
+
+        const { error } = isPersistedId(project.id)
+          ? await supabase.from('projects').update(row).eq('id', project.id)
+          : await supabase.from('projects').insert(row);
+
+        if (error) throw error;
+      }
+
+      await loadProjects();
+      alert('Projects saved successfully!');
+    } catch (error) {
+      console.error('Projects save error:', error);
+      alert('Failed to save projects: ' + (error as Error).message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -974,6 +1275,11 @@ function ProjectsEditor() {
           </div>
         )}
       </div>
+
+      <button onClick={handleSave} disabled={isSaving} className={`mt-6 ${buttonClass}`}>
+        <Save className="w-4 h-4" />
+        {isSaving ? 'Saving...' : 'Save Projects'}
+      </button>
     </div>
   );
 }
@@ -983,8 +1289,30 @@ function ProjectsEditor() {
 // ============================================
 function CaseStudiesEditor() {
   const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
+  const [persistedIds, setPersistedIds] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
+
+  const loadCaseStudies = async () => {
+    const { data, error } = await supabase
+      .from('case_studies')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error loading case studies:', error);
+      alert('Failed to load case studies: ' + error.message);
+      return;
+    }
+
+    setCaseStudies(data || []);
+    setPersistedIds((data || []).map((caseStudy) => caseStudy.id));
+  };
+
+  useEffect(() => {
+    loadCaseStudies();
+  }, []);
 
   const addCaseStudy = () => {
     const newCaseStudy: CaseStudy = {
@@ -1060,6 +1388,86 @@ function CaseStudiesEditor() {
       updateCaseStudy(id, 'method_items', [...(cs.method_items || []), '']);
     } else {
       updateCaseStudy(id, 'method_items_zh', [...(cs.method_items_zh || []), '']);
+    }
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const currentPersistedIds = caseStudies.filter((cs) => isPersistedId(cs.id)).map((cs) => cs.id);
+      const removedIds = persistedIds.filter((id) => !currentPersistedIds.includes(id));
+
+      if (removedIds.length > 0) {
+        const { error } = await supabase.from('case_studies').delete().in('id', removedIds);
+        if (error) throw error;
+      }
+
+      for (const [index, cs] of caseStudies.entries()) {
+        const row = {
+          project_id: cs.project_id || null,
+          slug: cs.slug || toSlug(cs.hero_title || cs.hero_title_zh, `case-study-${index + 1}`),
+          hero_title: cs.hero_title,
+          hero_title_zh: cs.hero_title_zh,
+          hero_image: cs.hero_image,
+          duration: cs.duration,
+          duration_zh: cs.duration_zh,
+          role: cs.role,
+          role_zh: cs.role_zh,
+          platform: cs.platform,
+          platform_zh: cs.platform_zh,
+          client: cs.client,
+          client_zh: cs.client_zh,
+          background_title: cs.background_title,
+          background_title_zh: cs.background_title_zh,
+          background_content: cs.background_content,
+          background_content_zh: cs.background_content_zh,
+          my_role_title: cs.my_role_title,
+          my_role_title_zh: cs.my_role_title_zh,
+          my_role_content: cs.my_role_content,
+          my_role_content_zh: cs.my_role_content_zh,
+          method_title: cs.method_title,
+          method_title_zh: cs.method_title_zh,
+          method_intro: cs.method_intro,
+          method_intro_zh: cs.method_intro_zh,
+          method_items: cs.method_items || [],
+          method_items_zh: cs.method_items_zh || [],
+          results_title: cs.results_title,
+          results_title_zh: cs.results_title_zh,
+          result_stat1_label: cs.result_stat1_label,
+          result_stat1_label_zh: cs.result_stat1_label_zh,
+          result_stat1_value: cs.result_stat1_value,
+          result_stat2_label: cs.result_stat2_label,
+          result_stat2_label_zh: cs.result_stat2_label_zh,
+          result_stat2_value: cs.result_stat2_value,
+          reflection_title: cs.reflection_title,
+          reflection_title_zh: cs.reflection_title_zh,
+          reflection_content: cs.reflection_content,
+          reflection_content_zh: cs.reflection_content_zh,
+          gallery_images: cs.gallery_images || [],
+          gallery_captions: cs.gallery_captions || [],
+          gallery_captions_zh: cs.gallery_captions_zh || [],
+          cta_title: cs.cta_title,
+          cta_title_zh: cs.cta_title_zh,
+          cta_button_text: cs.cta_button_text,
+          cta_button_text_zh: cs.cta_button_text_zh,
+          cta_link: cs.cta_link,
+          is_active: cs.is_active,
+        };
+
+        const { error } = isPersistedId(cs.id)
+          ? await supabase.from('case_studies').update(row).eq('id', cs.id)
+          : await supabase.from('case_studies').insert(row);
+
+        if (error) throw error;
+      }
+
+      await loadCaseStudies();
+      alert('Case studies saved successfully!');
+    } catch (error) {
+      console.error('Case studies save error:', error);
+      alert('Failed to save case studies: ' + (error as Error).message);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1429,6 +1837,11 @@ function CaseStudiesEditor() {
           </div>
         )}
       </div>
+
+      <button onClick={handleSave} disabled={isSaving} className={`mt-6 ${buttonClass}`}>
+        <Save className="w-4 h-4" />
+        {isSaving ? 'Saving...' : 'Save Case Studies'}
+      </button>
     </div>
   );
 }
@@ -1438,6 +1851,8 @@ function CaseStudiesEditor() {
 // ============================================
 function ServicesEditor() {
   const [services, setServices] = useState<Service[]>([]);
+  const [persistedIds, setPersistedIds] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   const [cta, setCta] = useState({
     title: '',
     titleZh: '',
@@ -1448,6 +1863,44 @@ function ServicesEditor() {
   });
 
   const icons = ['Palette', 'Layers', 'Search', 'Globe', 'Sparkles', 'Zap'];
+
+  const loadServices = async () => {
+    const [{ data, error }, settings] = await Promise.all([
+      supabase.from('services').select('*').order('order', { ascending: true }),
+      loadSiteSettings([
+        'services_cta_title',
+        'services_cta_title_zh',
+        'services_cta_desc',
+        'services_cta_desc_zh',
+        'services_cta_button',
+        'services_cta_button_zh',
+      ]),
+    ]);
+
+    if (error) {
+      console.error('Error loading services:', error);
+      alert('Failed to load services: ' + error.message);
+      return;
+    }
+
+    setServices(data || []);
+    setPersistedIds((data || []).map((service) => service.id));
+    setCta({
+      title: settings.services_cta_title || '',
+      titleZh: settings.services_cta_title_zh || '',
+      desc: settings.services_cta_desc || '',
+      descZh: settings.services_cta_desc_zh || '',
+      button: settings.services_cta_button || '',
+      buttonZh: settings.services_cta_button_zh || '',
+    });
+  };
+
+  useEffect(() => {
+    loadServices().catch((error) => {
+      console.error('Error loading services editor:', error);
+      alert('Failed to load services editor: ' + (error as Error).message);
+    });
+  }, []);
 
   const addService = () => {
     const newService: Service = {
@@ -1470,6 +1923,54 @@ function ServicesEditor() {
 
   const updateService = (id: string, field: keyof Service, value: string) => {
     setServices(services.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await saveSiteSettings([
+        { key: 'services_cta_title', value: cta.title },
+        { key: 'services_cta_title_zh', value: cta.titleZh },
+        { key: 'services_cta_desc', value: cta.desc },
+        { key: 'services_cta_desc_zh', value: cta.descZh },
+        { key: 'services_cta_button', value: cta.button },
+        { key: 'services_cta_button_zh', value: cta.buttonZh },
+      ]);
+
+      const currentPersistedIds = services.filter((service) => isPersistedId(service.id)).map((service) => service.id);
+      const removedIds = persistedIds.filter((id) => !currentPersistedIds.includes(id));
+
+      if (removedIds.length > 0) {
+        const { error } = await supabase.from('services').delete().in('id', removedIds);
+        if (error) throw error;
+      }
+
+      for (const [index, service] of services.entries()) {
+        const row = {
+          title: service.title,
+          title_zh: service.title_zh,
+          description: service.description,
+          description_zh: service.description_zh,
+          icon: service.icon,
+          order: index + 1,
+          is_active: service.is_active,
+        };
+
+        const { error } = isPersistedId(service.id)
+          ? await supabase.from('services').update(row).eq('id', service.id)
+          : await supabase.from('services').insert(row);
+
+        if (error) throw error;
+      }
+
+      await loadServices();
+      alert('Services saved successfully!');
+    } catch (error) {
+      console.error('Services save error:', error);
+      alert('Failed to save services: ' + (error as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -1619,6 +2120,11 @@ function ServicesEditor() {
           </div>
         </div>
       </div>
+
+      <button onClick={handleSave} disabled={isSaving} className={buttonClass}>
+        <Save className="w-4 h-4" />
+        {isSaving ? 'Saving...' : 'Save Services'}
+      </button>
     </div>
   );
 }
@@ -1630,6 +2136,12 @@ function ResumeEditor() {
   const [experiences, setExperiences] = useState<ResumeExperience[]>([]);
   const [educations, setEducations] = useState<ResumeEducation[]>([]);
   const [skills, setSkills] = useState<ResumeSkill[]>([]);
+  const [persistedExperienceIds, setPersistedExperienceIds] = useState<string[]>([]);
+  const [persistedEducationIds, setPersistedEducationIds] = useState<string[]>([]);
+  const [persistedSkillIds, setPersistedSkillIds] = useState<string[]>([]);
+  const [resumeFileId, setResumeFileId] = useState<string>('');
+  const [resumeFileName, setResumeFileName] = useState<string>('');
+  const [isSaving, setIsSaving] = useState(false);
   const [resumeFile, setResumeFile] = useState<string>('');
   const [labels, setLabels] = useState({
     headerTitle: '',
@@ -1644,6 +2156,67 @@ function ResumeEditor() {
     downloadZh: ''
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadResume = async () => {
+    const [settings, experienceResult, educationResult, skillResult, fileResult] = await Promise.all([
+      loadSiteSettings([
+        'resume_header_title',
+        'resume_header_title_zh',
+        'resume_experience_label',
+        'resume_experience_label_zh',
+        'resume_education_label',
+        'resume_education_label_zh',
+        'resume_skills_label',
+        'resume_skills_label_zh',
+        'resume_download_text',
+        'resume_download_text_zh',
+      ]),
+      supabase.from('resume_experience').select('*').order('order', { ascending: true }),
+      supabase.from('resume_education').select('*').order('order', { ascending: true }),
+      supabase.from('resume_skills').select('*').order('order', { ascending: true }),
+      supabase
+        .from('resume_files')
+        .select('*')
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+    ]);
+
+    if (experienceResult.error) throw experienceResult.error;
+    if (educationResult.error) throw educationResult.error;
+    if (skillResult.error) throw skillResult.error;
+    if (fileResult.error) throw fileResult.error;
+
+    setLabels({
+      headerTitle: settings.resume_header_title || '',
+      headerTitleZh: settings.resume_header_title_zh || '',
+      experience: settings.resume_experience_label || '',
+      experienceZh: settings.resume_experience_label_zh || '',
+      education: settings.resume_education_label || '',
+      educationZh: settings.resume_education_label_zh || '',
+      skills: settings.resume_skills_label || '',
+      skillsZh: settings.resume_skills_label_zh || '',
+      download: settings.resume_download_text || '',
+      downloadZh: settings.resume_download_text_zh || '',
+    });
+    setExperiences(experienceResult.data || []);
+    setEducations(educationResult.data || []);
+    setSkills(skillResult.data || []);
+    setPersistedExperienceIds((experienceResult.data || []).map((item) => item.id));
+    setPersistedEducationIds((educationResult.data || []).map((item) => item.id));
+    setPersistedSkillIds((skillResult.data || []).map((item) => item.id));
+    setResumeFileId(fileResult.data?.id || '');
+    setResumeFile(fileResult.data?.file_url || '');
+    setResumeFileName(fileResult.data?.file_name || '');
+  };
+
+  useEffect(() => {
+    loadResume().catch((error) => {
+      console.error('Error loading resume editor:', error);
+      alert('Failed to load resume editor: ' + (error as Error).message);
+    });
+  }, []);
 
   const addExperience = () => {
     const newExp: ResumeExperience = {
@@ -1731,6 +2304,114 @@ function ResumeEditor() {
 
     const { data: { publicUrl } } = supabase.storage.from('resume-files').getPublicUrl(fileName);
     setResumeFile(publicUrl);
+    setResumeFileName(file.name);
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await saveSiteSettings([
+        { key: 'resume_header_title', value: labels.headerTitle },
+        { key: 'resume_header_title_zh', value: labels.headerTitleZh },
+        { key: 'resume_experience_label', value: labels.experience },
+        { key: 'resume_experience_label_zh', value: labels.experienceZh },
+        { key: 'resume_education_label', value: labels.education },
+        { key: 'resume_education_label_zh', value: labels.educationZh },
+        { key: 'resume_skills_label', value: labels.skills },
+        { key: 'resume_skills_label_zh', value: labels.skillsZh },
+        { key: 'resume_download_text', value: labels.download },
+        { key: 'resume_download_text_zh', value: labels.downloadZh },
+      ]);
+
+      if (resumeFile) {
+        const row = {
+          file_url: resumeFile,
+          file_name: resumeFileName || 'resume.pdf',
+          is_active: true,
+        };
+        const { error } = resumeFileId
+          ? await supabase.from('resume_files').update(row).eq('id', resumeFileId)
+          : await supabase.from('resume_files').insert(row);
+
+        if (error) throw error;
+        await supabase.from('resume_files').update({ is_active: false }).neq('file_url', resumeFile);
+      }
+
+      const currentExperienceIds = experiences.filter((item) => isPersistedId(item.id)).map((item) => item.id);
+      const removedExperienceIds = persistedExperienceIds.filter((id) => !currentExperienceIds.includes(id));
+      if (removedExperienceIds.length > 0) {
+        const { error } = await supabase.from('resume_experience').delete().in('id', removedExperienceIds);
+        if (error) throw error;
+      }
+
+      for (const [index, exp] of experiences.entries()) {
+        const row = {
+          title: exp.title,
+          title_zh: exp.title_zh,
+          company: exp.company,
+          company_zh: exp.company_zh,
+          period: exp.period,
+          description: exp.description,
+          description_zh: exp.description_zh,
+          order: index + 1,
+          is_active: exp.is_active,
+        };
+        const { error } = isPersistedId(exp.id)
+          ? await supabase.from('resume_experience').update(row).eq('id', exp.id)
+          : await supabase.from('resume_experience').insert(row);
+        if (error) throw error;
+      }
+
+      const currentEducationIds = educations.filter((item) => isPersistedId(item.id)).map((item) => item.id);
+      const removedEducationIds = persistedEducationIds.filter((id) => !currentEducationIds.includes(id));
+      if (removedEducationIds.length > 0) {
+        const { error } = await supabase.from('resume_education').delete().in('id', removedEducationIds);
+        if (error) throw error;
+      }
+
+      for (const [index, edu] of educations.entries()) {
+        const row = {
+          degree: edu.degree,
+          degree_zh: edu.degree_zh,
+          school: edu.school,
+          school_zh: edu.school_zh,
+          period: edu.period,
+          order: index + 1,
+          is_active: edu.is_active,
+        };
+        const { error } = isPersistedId(edu.id)
+          ? await supabase.from('resume_education').update(row).eq('id', edu.id)
+          : await supabase.from('resume_education').insert(row);
+        if (error) throw error;
+      }
+
+      const currentSkillIds = skills.filter((item) => isPersistedId(item.id)).map((item) => item.id);
+      const removedSkillIds = persistedSkillIds.filter((id) => !currentSkillIds.includes(id));
+      if (removedSkillIds.length > 0) {
+        const { error } = await supabase.from('resume_skills').delete().in('id', removedSkillIds);
+        if (error) throw error;
+      }
+
+      for (const [index, skill] of skills.entries()) {
+        const row = {
+          name: skill.name,
+          order: index + 1,
+          is_active: skill.is_active,
+        };
+        const { error } = isPersistedId(skill.id)
+          ? await supabase.from('resume_skills').update(row).eq('id', skill.id)
+          : await supabase.from('resume_skills').insert(row);
+        if (error) throw error;
+      }
+
+      await loadResume();
+      alert('Resume saved successfully!');
+    } catch (error) {
+      console.error('Resume save error:', error);
+      alert('Failed to save resume: ' + (error as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -2088,6 +2769,11 @@ function ResumeEditor() {
           )}
         </div>
       </div>
+
+      <button onClick={handleSave} disabled={isSaving} className={buttonClass}>
+        <Save className="w-4 h-4" />
+        {isSaving ? 'Saving...' : 'Save Resume'}
+      </button>
     </div>
   );
 }
@@ -2097,6 +2783,8 @@ function ResumeEditor() {
 // ============================================
 function ContactEditor() {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
+  const [persistedIds, setPersistedIds] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
   const [contact, setContact] = useState({
     letsConnect: '',
     letsConnectZh: '',
@@ -2117,6 +2805,62 @@ function ContactEditor() {
 
   const icons = ['Linkedin', 'Instagram', 'Dribbble', 'Github', 'Twitter', 'Youtube', 'Globe'];
 
+  const loadContact = async () => {
+    const [{ data, error }, settings] = await Promise.all([
+      supabase.from('social_links').select('*').order('order', { ascending: true }),
+      loadSiteSettings([
+        'contact_lets_connect',
+        'contact_lets_connect_zh',
+        'contact_title',
+        'contact_title_zh',
+        'contact_desc',
+        'contact_desc_zh',
+        'contact_email',
+        'contact_email_label',
+        'contact_email_label_zh',
+        'contact_email_desc',
+        'contact_email_desc_zh',
+        'contact_social_label',
+        'contact_social_label_zh',
+        'contact_social_desc',
+        'contact_social_desc_zh',
+      ]),
+    ]);
+
+    if (error) {
+      console.error('Error loading social links:', error);
+      alert('Failed to load social links: ' + error.message);
+      return;
+    }
+
+    setSocialLinks(data || []);
+    setPersistedIds((data || []).map((link) => link.id));
+    setContact({
+      letsConnect: settings.contact_lets_connect || '',
+      letsConnectZh: settings.contact_lets_connect_zh || '',
+      title: settings.contact_title || '',
+      titleZh: settings.contact_title_zh || '',
+      desc: settings.contact_desc || '',
+      descZh: settings.contact_desc_zh || '',
+      email: settings.contact_email || '',
+      emailLabel: settings.contact_email_label || '',
+      emailLabelZh: settings.contact_email_label_zh || '',
+      emailDesc: settings.contact_email_desc || '',
+      emailDescZh: settings.contact_email_desc_zh || '',
+      socialLabel: settings.contact_social_label || '',
+      socialLabelZh: settings.contact_social_label_zh || '',
+      socialDesc: settings.contact_social_desc || '',
+      socialDescZh: settings.contact_social_desc_zh || '',
+    });
+  };
+
+  useEffect(() => {
+    loadContact().catch((error) => {
+      console.error('Error loading contact editor:', error);
+      alert('Failed to load contact editor: ' + (error as Error).message);
+    });
+  }, []);
+
   const addSocialLink = () => {
     const newLink: SocialLink = {
       id: `temp-${Date.now()}`,
@@ -2136,6 +2880,61 @@ function ContactEditor() {
 
   const updateSocialLink = (id: string, field: keyof SocialLink, value: string) => {
     setSocialLinks(socialLinks.map((l) => (l.id === id ? { ...l, [field]: value } : l)));
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      await saveSiteSettings([
+        { key: 'contact_lets_connect', value: contact.letsConnect },
+        { key: 'contact_lets_connect_zh', value: contact.letsConnectZh },
+        { key: 'contact_title', value: contact.title },
+        { key: 'contact_title_zh', value: contact.titleZh },
+        { key: 'contact_desc', value: contact.desc },
+        { key: 'contact_desc_zh', value: contact.descZh },
+        { key: 'contact_email', value: contact.email },
+        { key: 'contact_email_label', value: contact.emailLabel },
+        { key: 'contact_email_label_zh', value: contact.emailLabelZh },
+        { key: 'contact_email_desc', value: contact.emailDesc },
+        { key: 'contact_email_desc_zh', value: contact.emailDescZh },
+        { key: 'contact_social_label', value: contact.socialLabel },
+        { key: 'contact_social_label_zh', value: contact.socialLabelZh },
+        { key: 'contact_social_desc', value: contact.socialDesc },
+        { key: 'contact_social_desc_zh', value: contact.socialDescZh },
+      ]);
+
+      const currentPersistedIds = socialLinks.filter((link) => isPersistedId(link.id)).map((link) => link.id);
+      const removedIds = persistedIds.filter((id) => !currentPersistedIds.includes(id));
+
+      if (removedIds.length > 0) {
+        const { error } = await supabase.from('social_links').delete().in('id', removedIds);
+        if (error) throw error;
+      }
+
+      for (const [index, link] of socialLinks.entries()) {
+        const row = {
+          name: link.name,
+          icon: link.icon,
+          url: link.url,
+          order: index + 1,
+          is_active: link.is_active,
+        };
+
+        const { error } = isPersistedId(link.id)
+          ? await supabase.from('social_links').update(row).eq('id', link.id)
+          : await supabase.from('social_links').insert(row);
+
+        if (error) throw error;
+      }
+
+      await loadContact();
+      alert('Contact content saved successfully!');
+    } catch (error) {
+      console.error('Contact save error:', error);
+      alert('Failed to save contact content: ' + (error as Error).message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -2340,6 +3139,11 @@ function ContactEditor() {
           )}
         </div>
       </div>
+
+      <button onClick={handleSave} disabled={isSaving} className={buttonClass}>
+        <Save className="w-4 h-4" />
+        {isSaving ? 'Saving...' : 'Save Contact'}
+      </button>
     </div>
   );
 }

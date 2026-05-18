@@ -2,7 +2,7 @@ import type * as React from 'react';
 import { motion } from 'framer-motion';
 import { useCMS } from '../cms/CMSContext';
 import { useLanguage } from '../i18n/LanguageContext';
-import { Download, Eye, GraduationCap, Briefcase, Trophy, Users } from 'lucide-react';
+import { Download, Eye, GraduationCap, Briefcase, Trophy, Users, Sparkles } from 'lucide-react';
 import { fadeInUpCompact, staggerContainerCompact, staggerItemCompact } from '../shared/animations';
 
 interface ResumeItem {
@@ -93,6 +93,15 @@ export function Resume() {
       }))
     : t.resume.educationList;
 
+  const experienceList: ResumeItem[] = content.resumeExperiences?.length > 0
+    ? content.resumeExperiences.map((item: any) => ({
+        title: isZh ? item.title_zh || item.title : item.title,
+        subtitle: isZh ? item.company_zh || item.company : item.company,
+        period: item.period,
+        description: isZh ? item.description_zh || item.description : item.description
+      }))
+    : [];
+
   const internshipList: ResumeItem[] = content.resumeInternships?.length > 0
     ? content.resumeInternships.map((item: any) => ({
         title: isZh ? item.title_zh || item.title : item.title,
@@ -121,6 +130,11 @@ export function Resume() {
     : t.resume.campusList;
 
   const hasResumeFile = content.resumeFile?.file_url;
+  const resumeTitle = isZh ? content.resumeHeaderTitleZh : content.resumeHeaderTitle;
+  const educationTitle = isZh ? content.resumeEducationLabelZh : content.resumeEducationLabel;
+  const experienceTitle = isZh ? content.resumeExperienceLabelZh : content.resumeExperienceLabel;
+  const skillsTitle = isZh ? content.resumeSkillsLabelZh : content.resumeSkillsLabel;
+  const downloadText = isZh ? content.resumeDownloadTextZh : content.resumeDownloadText;
 
   return (
     <main className="w-full min-h-screen bg-white">
@@ -145,7 +159,7 @@ export function Resume() {
                 variants={staggerItemCompact}
                 className="font-serif italic text-3xl md:text-4xl text-stone-900"
               >
-                {isZh ? '个人简历' : 'Resume'}
+                {resumeTitle || (isZh ? '\u4e2a\u4eba\u7b80\u5386' : 'Resume')}
               </motion.h1>
             </div>
 
@@ -159,7 +173,7 @@ export function Resume() {
                     className="inline-flex items-center gap-1.5 px-4 py-2 bg-stone-900 text-white text-[11px] font-medium rounded-full hover:bg-stone-800 transition-colors"
                   >
                     <Download className="w-3.5 h-3.5" />
-                    {t.resume.downloadPDF}
+                    {downloadText || t.resume.downloadPDF}
                   </a>
                   <a
                     href={content.resumeFile.file_url}
@@ -186,31 +200,70 @@ export function Resume() {
         <div className="max-w-3xl mx-auto px-6">
           <Section
             icon={<GraduationCap className="w-4 h-4" />}
-            title={t.resume.education}
+            title={educationTitle || t.resume.education}
             items={educationList}
             index={0}
           />
+
+          {experienceList.length > 0 && (
+            <Section
+              icon={<Briefcase className="w-4 h-4" />}
+              title={experienceTitle || 'Experience'}
+              items={experienceList}
+              index={1}
+            />
+          )}
 
           <Section
             icon={<Briefcase className="w-4 h-4" />}
             title={t.resume.internship}
             items={internshipList}
-            index={1}
+            index={2}
           />
 
           <Section
             icon={<Trophy className="w-4 h-4" />}
             title={t.resume.competition}
             items={competitionList}
-            index={2}
+            index={3}
           />
 
           <Section
             icon={<Users className="w-4 h-4" />}
             title={t.resume.campus}
             items={campusList}
-            index={3}
+            index={4}
           />
+
+          {content.resumeSkills?.length > 0 && (
+            <motion.section
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true, amount: 0.15 }}
+              variants={staggerContainerCompact}
+              className="border-t border-stone-200 py-10 md:py-12"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-12">
+                <motion.div variants={staggerItemCompact} className="md:col-span-3">
+                  <div className="flex items-center gap-2 text-stone-400">
+                    <Sparkles className="w-4 h-4" />
+                    <span className="text-[11px] font-semibold tracking-[0.2em] uppercase">
+                      {skillsTitle || 'Skills'}
+                    </span>
+                  </div>
+                </motion.div>
+                <motion.div variants={staggerItemCompact} className="md:col-span-9">
+                  <div className="flex flex-wrap gap-2">
+                    {content.resumeSkills.map((skill: any) => (
+                      <span key={skill.id} className="rounded-full bg-stone-100 px-3 py-1.5 text-[12px] text-stone-600">
+                        {skill.name}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              </div>
+            </motion.section>
+          )}
         </div>
       </section>
     </main>
