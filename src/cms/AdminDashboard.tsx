@@ -287,6 +287,7 @@ function HeroEditor() {
   const [titleZh, setTitleZh] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [subtitleZh, setSubtitleZh] = useState('');
+  const [isSavingText, setIsSavingText] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 加载现有数据
@@ -372,6 +373,31 @@ function HeroEditor() {
     }
   };
 
+  const handleSaveText = async () => {
+    setIsSavingText(true);
+
+    const updates = [
+      { key: 'hero_title', value: title, type: 'text' },
+      { key: 'hero_title_zh', value: titleZh, type: 'text' },
+      { key: 'hero_subtitle', value: subtitle, type: 'text' },
+      { key: 'hero_subtitle_zh', value: subtitleZh, type: 'text' },
+    ];
+
+    const { error } = await supabase
+      .from('site_settings')
+      .upsert(updates, { onConflict: 'key' });
+
+    setIsSavingText(false);
+
+    if (error) {
+      console.error('Hero text save error:', error);
+      alert('Failed to save hero text: ' + error.message);
+      return;
+    }
+
+    alert('Hero text saved successfully!');
+  };
+
   return (
     <div className="max-w-2xl">
       <h2 className="font-serif italic text-3xl text-stone-900 mb-8">Hero Section</h2>
@@ -449,6 +475,14 @@ function HeroEditor() {
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
           />
         </div>
+        <button
+          onClick={handleSaveText}
+          disabled={isSavingText}
+          className="inline-flex items-center gap-2 bg-stone-900 text-white px-5 py-3 text-[13px] font-medium rounded-md hover:bg-stone-800 transition-colors disabled:opacity-50"
+        >
+          <Save className="w-4 h-4" />
+          {isSavingText ? 'Saving...' : 'Save Hero Text'}
+        </button>
       </div>
     </div>
   );
