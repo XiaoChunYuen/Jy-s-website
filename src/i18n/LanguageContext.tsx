@@ -8,9 +8,22 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
+const languageStorageKey = 'preferred_language';
+
+function getInitialLanguage(): Language {
+  if (typeof window === 'undefined') return 'zh';
+
+  const savedLanguage = window.localStorage.getItem(languageStorageKey);
+  return savedLanguage === 'en' || savedLanguage === 'zh' ? savedLanguage : 'zh';
+}
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>('en');
+  const [language, setLanguageState] = useState<Language>(getInitialLanguage);
+
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+    window.localStorage.setItem(languageStorageKey, lang);
+  };
 
   const value = {
     language,
