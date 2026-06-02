@@ -2242,6 +2242,7 @@ function ResumeEditor() {
   const [resumeFileId, setResumeFileId] = useState<string>('');
   const [resumeFileName, setResumeFileName] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
   const [resumeFile, setResumeFile] = useState<string>('');
   const [labels, setLabels] = useState({
     headerTitle: '',
@@ -2389,22 +2390,51 @@ function ResumeEditor() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.type !== 'application/pdf') {
-      alert('Please upload a PDF file');
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (!isPdf) {
+      alert('请上传 PDF 格式的简历文件');
+      e.target.value = '';
       return;
     }
 
-    const fileName = `resume-${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from('resume-files').upload(fileName, file);
+    setIsUploadingResume(true);
+    try {
+      const cleanFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const fileName = `resume-${Date.now()}-${cleanFileName}`;
+      const { error } = await supabase.storage
+        .from('resume-files')
+        .upload(fileName, file, {
+          contentType: 'application/pdf',
+          upsert: true,
+        });
 
-    if (error) {
-      alert('Upload failed: ' + error.message);
-      return;
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage.from('resume-files').getPublicUrl(fileName);
+      const row = {
+        file_url: publicUrl,
+        file_name: file.name,
+        is_active: true,
+      };
+
+      const saveResult = resumeFileId
+        ? await supabase.from('resume_files').update(row).eq('id', resumeFileId).select().maybeSingle()
+        : await supabase.from('resume_files').insert(row).select().single();
+
+      if (saveResult.error) throw saveResult.error;
+
+      await supabase.from('resume_files').update({ is_active: false }).neq('file_url', publicUrl);
+      setResumeFile(publicUrl);
+      setResumeFileName(file.name);
+      setResumeFileId(saveResult.data?.id || resumeFileId);
+      alert('简历 PDF 已上传并保存');
+    } catch (error) {
+      console.error('Resume PDF upload error:', error);
+      alert('简历上传失败：' + (error as Error).message);
+    } finally {
+      setIsUploadingResume(false);
+      e.target.value = '';
     }
-
-    const { data: { publicUrl } } = supabase.storage.from('resume-files').getPublicUrl(fileName);
-    setResumeFile(publicUrl);
-    setResumeFileName(file.name);
   };
 
   const handleSave = async () => {
@@ -2517,80 +2547,80 @@ function ResumeEditor() {
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <h2 className="font-serif italic text-3xl text-stone-900 mb-2">Resume</h2>
-        <p className="text-[14px] text-stone-500">Manage your resume content and PDF file</p>
+        <h2 className="font-serif italic text-3xl text-stone-900 mb-2">简历</h2>
+        <p className="text-[14px] text-stone-500">编辑简历页面内容、经历、教育、技能和 PDF 文件。</p>
       </div>
 
       {/* Labels */}
       <div className="bg-white p-6 rounded-lg border border-stone-200">
-        <h3 className="text-[14px] font-medium text-stone-900 mb-4">Section Labels</h3>
+        <h3 className="text-[14px] font-medium text-stone-900 mb-4">页面标题与按钮文字</h3>
         <div className="grid grid-cols-2 gap-4">
           <input
             type="text"
-            placeholder="Header Title (EN)"
+            placeholder="页面主标题（英文，可选）"
             value={labels.headerTitle}
             onChange={(e) => setLabels({ ...labels, headerTitle: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
           />
           <input
             type="text"
-            placeholder="Header Title (ZH)"
+            placeholder="页面主标题（中文）"
             value={labels.headerTitleZh}
             onChange={(e) => setLabels({ ...labels, headerTitleZh: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
           />
           <input
             type="text"
-            placeholder="Experience Label (EN)"
+            placeholder="工作经历标题（英文，可选）"
             value={labels.experience}
             onChange={(e) => setLabels({ ...labels, experience: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
           />
           <input
             type="text"
-            placeholder="Experience Label (ZH)"
+            placeholder="工作经历标题（中文）"
             value={labels.experienceZh}
             onChange={(e) => setLabels({ ...labels, experienceZh: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
           />
           <input
             type="text"
-            placeholder="Education Label (EN)"
+            placeholder="教育背景标题（英文，可选）"
             value={labels.education}
             onChange={(e) => setLabels({ ...labels, education: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
           />
           <input
             type="text"
-            placeholder="Education Label (ZH)"
+            placeholder="教育背景标题（中文）"
             value={labels.educationZh}
             onChange={(e) => setLabels({ ...labels, educationZh: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
           />
           <input
             type="text"
-            placeholder="Skills Label (EN)"
+            placeholder="技能标题（英文，可选）"
             value={labels.skills}
             onChange={(e) => setLabels({ ...labels, skills: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
           />
           <input
             type="text"
-            placeholder="Skills Label (ZH)"
+            placeholder="技能标题（中文）"
             value={labels.skillsZh}
             onChange={(e) => setLabels({ ...labels, skillsZh: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
           />
           <input
             type="text"
-            placeholder="Download Button (EN)"
+            placeholder="下载按钮文字（英文，可选）"
             value={labels.download}
             onChange={(e) => setLabels({ ...labels, download: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
           />
           <input
             type="text"
-            placeholder="Download Button (ZH)"
+            placeholder="下载按钮文字（中文）"
             value={labels.downloadZh}
             onChange={(e) => setLabels({ ...labels, downloadZh: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -2602,13 +2632,13 @@ function ResumeEditor() {
       <div className="bg-white p-6 rounded-lg border border-stone-200">
         <h3 className="text-[14px] font-medium text-stone-900 mb-4 flex items-center gap-2">
           <FileText className="w-4 h-4" />
-          Resume PDF
+          简历 PDF
         </h3>
         <div className="border-2 border-dashed border-stone-300 rounded-lg p-8 text-center">
           <input
             ref={fileInputRef}
             type="file"
-            accept=".pdf"
+            accept=".pdf,application/pdf"
             onChange={handlePDFUpload}
             className="hidden"
           />
@@ -2618,7 +2648,10 @@ function ResumeEditor() {
               <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <FileText className="w-6 h-6 text-green-600" />
               </div>
-              <p className="text-[14px] text-stone-600 mb-2">Resume uploaded successfully!</p>
+              <p className="text-[14px] text-stone-600 mb-1">当前简历已上传</p>
+              {resumeFileName && (
+                <p className="text-[12px] text-stone-400 mb-3">{resumeFileName}</p>
+              )}
               <div className="flex gap-3 justify-center">
                 <a
                   href={resumeFile}
@@ -2626,13 +2659,14 @@ function ResumeEditor() {
                   rel="noopener noreferrer"
                   className="text-[13px] text-blue-600 hover:underline"
                 >
-                  View PDF
+                  查看 PDF
                 </a>
                 <button
                   onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploadingResume}
                   className="text-[13px] text-stone-600 hover:text-stone-900"
                 >
-                  Replace
+                  {isUploadingResume ? '上传中...' : '替换文件'}
                 </button>
               </div>
             </div>
@@ -2641,12 +2675,13 @@ function ResumeEditor() {
               <div className="w-12 h-12 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Upload className="w-6 h-6 text-stone-400" />
               </div>
-              <p className="text-[14px] text-stone-600 mb-4">Upload your resume PDF</p>
+              <p className="text-[14px] text-stone-600 mb-4">上传你的简历 PDF</p>
               <button
                 onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingResume}
                 className="bg-stone-900 text-white px-4 py-2 text-[13px] font-medium rounded-md hover:bg-stone-800 transition-colors"
               >
-                Select PDF File
+                {isUploadingResume ? '上传中...' : '选择 PDF 文件'}
               </button>
             </div>
           )}
@@ -2658,14 +2693,14 @@ function ResumeEditor() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[14px] font-medium text-stone-900 flex items-center gap-2">
             <BriefcaseIcon className="w-4 h-4" />
-            Experience
+            工作经历
           </h3>
           <button
             onClick={addExperience}
             className="flex items-center gap-2 bg-stone-900 text-white px-3 py-1.5 text-[12px] font-medium rounded-md hover:bg-stone-800 transition-colors"
           >
             <Plus className="w-3 h-3" />
-            Add Experience
+            添加经历
           </button>
         </div>
 
@@ -2673,7 +2708,7 @@ function ResumeEditor() {
           {experiences.map((exp, index) => (
             <div key={exp.id} className="p-4 border border-stone-200 rounded-lg">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[12px] text-stone-500">Experience {index + 1}</span>
+                <span className="text-[12px] text-stone-500">经历 {index + 1}</span>
                 <button
                   onClick={() => removeExperience(exp.id)}
                   className="text-red-500 hover:text-red-600"
@@ -2685,14 +2720,14 @@ function ResumeEditor() {
                 <div className="grid grid-cols-2 gap-3">
                   <input
                     type="text"
-                    placeholder="Job Title (EN)"
+                    placeholder="职位 / 经历标题（英文，可选）"
                     value={exp.title}
                     onChange={(e) => updateExperience(exp.id, 'title', e.target.value)}
                     className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
                   />
                   <input
                     type="text"
-                    placeholder="Job Title (ZH)"
+                    placeholder="职位 / 经历标题（中文）"
                     value={exp.title_zh}
                     onChange={(e) => updateExperience(exp.id, 'title_zh', e.target.value)}
                     className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
@@ -2701,14 +2736,14 @@ function ResumeEditor() {
                 <div className="grid grid-cols-2 gap-3">
                   <input
                     type="text"
-                    placeholder="Company (EN)"
+                    placeholder="公司 / 组织（英文，可选）"
                     value={exp.company}
                     onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
                     className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
                   />
                   <input
                     type="text"
-                    placeholder="Company (ZH)"
+                    placeholder="公司 / 组织（中文）"
                     value={exp.company_zh}
                     onChange={(e) => updateExperience(exp.id, 'company_zh', e.target.value)}
                     className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
@@ -2716,24 +2751,24 @@ function ResumeEditor() {
                 </div>
                 <input
                   type="text"
-                  placeholder="Period (e.g., 2021 — Present)"
+                  placeholder="时间，例如 2024.03 - 2024.08 / 2021 - 至今"
                   value={exp.period}
                   onChange={(e) => updateExperience(exp.id, 'period', e.target.value)}
                   className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
                 />
                 <div className="grid grid-cols-2 gap-3">
                   <textarea
-                    placeholder="Description (EN)"
+                    placeholder="经历描述（英文，可选）"
                     value={exp.description}
                     onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
-                    rows={2}
+                    rows={4}
                     className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900 resize-none"
                   />
                   <textarea
-                    placeholder="Description (ZH)"
+                    placeholder="经历描述（中文，可写项目职责、成果、技能、数据等）"
                     value={exp.description_zh}
                     onChange={(e) => updateExperience(exp.id, 'description_zh', e.target.value)}
-                    rows={2}
+                    rows={4}
                     className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900 resize-none"
                   />
                 </div>
@@ -2743,7 +2778,7 @@ function ResumeEditor() {
 
           {experiences.length === 0 && (
             <div className="text-center py-6 bg-stone-50 rounded-lg border border-dashed border-stone-300">
-              <p className="text-[13px] text-stone-500">No experience entries yet</p>
+              <p className="text-[13px] text-stone-500">还没有工作 / 项目经历</p>
             </div>
           )}
         </div>
@@ -2754,14 +2789,14 @@ function ResumeEditor() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[14px] font-medium text-stone-900 flex items-center gap-2">
             <GraduationCap className="w-4 h-4" />
-            Education
+            教育背景
           </h3>
           <button
             onClick={addEducation}
             className="flex items-center gap-2 bg-stone-900 text-white px-3 py-1.5 text-[12px] font-medium rounded-md hover:bg-stone-800 transition-colors"
           >
             <Plus className="w-3 h-3" />
-            Add Education
+            添加教育经历
           </button>
         </div>
 
@@ -2769,7 +2804,7 @@ function ResumeEditor() {
           {educations.map((edu, index) => (
             <div key={edu.id} className="p-4 border border-stone-200 rounded-lg">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[12px] text-stone-500">Education {index + 1}</span>
+                <span className="text-[12px] text-stone-500">教育经历 {index + 1}</span>
                 <button
                   onClick={() => removeEducation(edu.id)}
                   className="text-red-500 hover:text-red-600"
@@ -2781,14 +2816,14 @@ function ResumeEditor() {
                 <div className="grid grid-cols-2 gap-3">
                   <input
                     type="text"
-                    placeholder="Degree (EN)"
+                    placeholder="学历 / 专业 / 项目名称（英文，可选）"
                     value={edu.degree}
                     onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
                     className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
                   />
                   <input
                     type="text"
-                    placeholder="Degree (ZH)"
+                    placeholder="学历 / 专业 / 项目名称（中文）"
                     value={edu.degree_zh}
                     onChange={(e) => updateEducation(edu.id, 'degree_zh', e.target.value)}
                     className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
@@ -2797,14 +2832,14 @@ function ResumeEditor() {
                 <div className="grid grid-cols-2 gap-3">
                   <input
                     type="text"
-                    placeholder="School (EN)"
+                    placeholder="学校 / 机构（英文，可选）"
                     value={edu.school}
                     onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
                     className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
                   />
                   <input
                     type="text"
-                    placeholder="School (ZH)"
+                    placeholder="学校 / 机构（中文）"
                     value={edu.school_zh}
                     onChange={(e) => updateEducation(edu.id, 'school_zh', e.target.value)}
                     className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
@@ -2812,7 +2847,7 @@ function ResumeEditor() {
                 </div>
                 <input
                   type="text"
-                  placeholder="Period (e.g., 2014 — 2018)"
+                  placeholder="时间，例如 2020.09 - 2024.06"
                   value={edu.period}
                   onChange={(e) => updateEducation(edu.id, 'period', e.target.value)}
                   className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
@@ -2823,7 +2858,7 @@ function ResumeEditor() {
 
           {educations.length === 0 && (
             <div className="text-center py-6 bg-stone-50 rounded-lg border border-dashed border-stone-300">
-              <p className="text-[13px] text-stone-500">No education entries yet</p>
+              <p className="text-[13px] text-stone-500">还没有教育经历</p>
             </div>
           )}
         </div>
@@ -2834,14 +2869,14 @@ function ResumeEditor() {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[14px] font-medium text-stone-900 flex items-center gap-2">
             <Sparkles className="w-4 h-4" />
-            Skills
+            技能
           </h3>
           <button
             onClick={addSkill}
             className="flex items-center gap-2 bg-stone-900 text-white px-3 py-1.5 text-[12px] font-medium rounded-md hover:bg-stone-800 transition-colors"
           >
             <Plus className="w-3 h-3" />
-            Add Skill
+            添加技能
           </button>
         </div>
 
@@ -2852,7 +2887,7 @@ function ResumeEditor() {
                 type="text"
                 value={skill.name}
                 onChange={(e) => updateSkill(skill.id, e.target.value)}
-                placeholder="Skill name"
+                placeholder="技能名称"
                 className="bg-transparent text-[13px] text-stone-700 focus:outline-none w-24"
               />
               <button
@@ -2865,14 +2900,14 @@ function ResumeEditor() {
           ))}
 
           {skills.length === 0 && (
-            <p className="text-[13px] text-stone-500">No skills added yet</p>
+            <p className="text-[13px] text-stone-500">还没有添加技能</p>
           )}
         </div>
       </div>
 
       <button onClick={handleSave} disabled={isSaving} className={buttonClass}>
         <Save className="w-4 h-4" />
-        {isSaving ? 'Saving...' : 'Save Resume'}
+        {isSaving ? '保存中...' : '保存简历内容'}
       </button>
     </div>
   );
