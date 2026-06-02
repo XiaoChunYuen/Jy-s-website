@@ -1223,6 +1223,14 @@ function ProjectsEditor() {
                 />
               </div>
 
+              <input
+                type="text"
+                placeholder="Detail Page Slug (for example: reform-index)"
+                value={project.slug}
+                onChange={(e) => updateProject(project.id, 'slug', e.target.value)}
+                className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
+              />
+
               <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"
@@ -1259,7 +1267,7 @@ function ProjectsEditor() {
 
               <input
                 type="text"
-                placeholder="Link URL"
+                placeholder="External Project URL"
                 value={project.link}
                 onChange={(e) => updateProject(project.id, 'link', e.target.value)}
                 className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"

@@ -203,26 +203,21 @@ function ProjectCard({ to, imageSrc, imageAlt, title, category, viewProject }: P
           <img
             src={imageSrc}
             alt={imageAlt}
-            className="w-full h-full object-cover grayscale opacity-90 group-hover:scale-105 group-hover:grayscale-0 transition-all duration-700"
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.03]"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-stone-900/0 group-hover:bg-stone-900/20 transition-all duration-500 flex items-center justify-center">
-            <span className="text-white text-[11px] font-semibold tracking-[0.2em] uppercase opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+          <div className="absolute inset-0 bg-stone-950/0 group-hover:bg-stone-950/8 transition-colors duration-500 flex items-end justify-start p-5">
+            <span className="rounded-full bg-white/88 px-4 py-2 text-[11px] font-semibold tracking-[0.2em] uppercase text-stone-900 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
               {viewProject}
             </span>
           </div>
         </div>
 
-        <h3 className="text-3xl font-serif italic mb-3 text-stone-900 relative overflow-hidden">
-          <span className="block transform group-hover:-translate-y-full transition-transform duration-500">
-            {title}
-          </span>
-          <span className="absolute top-0 left-0 block transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 text-stone-600">
-            {title}
-          </span>
+        <h3 className="text-3xl font-serif italic mb-3 text-stone-900 transition-colors duration-300 group-hover:text-stone-700">
+          {title}
         </h3>
 
-        <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-stone-400 group-hover:text-stone-600 transition-colors">
+        <p className="text-[11px] font-semibold tracking-[0.2em] uppercase text-stone-500">
           {category}
         </p>
       </Link>
