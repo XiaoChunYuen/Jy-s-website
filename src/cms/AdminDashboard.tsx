@@ -2278,8 +2278,7 @@ function ResumeEditor() {
       supabase
         .from('resume_files')
         .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
+        .order('updated_at', { ascending: false })
         .limit(1)
         .maybeSingle(),
     ]);
@@ -2414,7 +2413,7 @@ function ResumeEditor() {
       const row = {
         file_url: publicUrl,
         file_name: file.name,
-        is_active: true,
+        updated_at: new Date().toISOString(),
       };
 
       const saveResult = resumeFileId
@@ -2423,7 +2422,6 @@ function ResumeEditor() {
 
       if (saveResult.error) throw saveResult.error;
 
-      await supabase.from('resume_files').update({ is_active: false }).neq('file_url', publicUrl);
       setResumeFile(publicUrl);
       setResumeFileName(file.name);
       setResumeFileId(saveResult.data?.id || resumeFileId);
@@ -2457,14 +2455,13 @@ function ResumeEditor() {
         const row = {
           file_url: resumeFile,
           file_name: resumeFileName || 'resume.pdf',
-          is_active: true,
+          updated_at: new Date().toISOString(),
         };
         const { error } = resumeFileId
           ? await supabase.from('resume_files').update(row).eq('id', resumeFileId)
           : await supabase.from('resume_files').insert(row);
 
         if (error) throw error;
-        await supabase.from('resume_files').update({ is_active: false }).neq('file_url', resumeFile);
       }
 
       const currentExperienceIds = experiences.filter((item) => isPersistedId(item.id)).map((item) => item.id);

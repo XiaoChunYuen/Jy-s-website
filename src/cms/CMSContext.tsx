@@ -114,10 +114,9 @@ export function CMSProvider({ children }: { children: ReactNode }) {
       const resumeFilePromise = supabase
         .from('resume_files')
         .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
+        .order('updated_at', { ascending: false })
         .limit(1)
-        .single();
+        .maybeSingle();
 
       const resumeFileResult = await fetchWithTimeout(resumeFilePromise, 2000, { data: null, error: null });
       const resumeFile = resumeFileResult.data;
