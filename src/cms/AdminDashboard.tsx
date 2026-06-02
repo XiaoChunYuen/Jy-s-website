@@ -1209,14 +1209,14 @@ function ProjectsEditor() {
               <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"
-                  placeholder="Title (English)"
+                  placeholder="项目标题（英文，可选）"
                   value={project.title}
                   onChange={(e) => updateProject(project.id, 'title', e.target.value)}
                   className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                 />
                 <input
                   type="text"
-                  placeholder="Title (Chinese)"
+                  placeholder="项目标题（中文）"
                   value={project.title_zh}
                   onChange={(e) => updateProject(project.id, 'title_zh', e.target.value)}
                   className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -1225,7 +1225,7 @@ function ProjectsEditor() {
 
               <input
                 type="text"
-                placeholder="Detail Page Slug (for example: reform-index)"
+                placeholder="详情页路径 Slug，例如 reform-index"
                 value={project.slug}
                 onChange={(e) => updateProject(project.id, 'slug', e.target.value)}
                 className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -1234,14 +1234,14 @@ function ProjectsEditor() {
               <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"
-                  placeholder="Category (English)"
+                  placeholder="项目分类（英文，可选）"
                   value={project.category}
                   onChange={(e) => updateProject(project.id, 'category', e.target.value)}
                   className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                 />
                 <input
                   type="text"
-                  placeholder="Category (Chinese)"
+                  placeholder="项目分类（中文）"
                   value={project.category_zh}
                   onChange={(e) => updateProject(project.id, 'category_zh', e.target.value)}
                   className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -1250,14 +1250,14 @@ function ProjectsEditor() {
 
               <div className="grid grid-cols-2 gap-4">
                 <textarea
-                  placeholder="Description (English)"
+                  placeholder="项目描述（英文，可选）"
                   value={project.description}
                   onChange={(e) => updateProject(project.id, 'description', e.target.value)}
                   rows={2}
                   className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900 resize-none"
                 />
                 <textarea
-                  placeholder="Description (Chinese)"
+                  placeholder="项目描述（中文）"
                   value={project.description_zh}
                   onChange={(e) => updateProject(project.id, 'description_zh', e.target.value)}
                   rows={2}
@@ -1267,7 +1267,7 @@ function ProjectsEditor() {
 
               <input
                 type="text"
-                placeholder="External Project URL"
+                placeholder="外部项目网址，例如 Streamlit / GitHub / 演示链接"
                 value={project.link}
                 onChange={(e) => updateProject(project.id, 'link', e.target.value)}
                 className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -1297,25 +1297,33 @@ function ProjectsEditor() {
 // ============================================
 function CaseStudiesEditor() {
   const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [persistedIds, setPersistedIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const fileInputRefs = useRef<{ [key: string]: HTMLInputElement | null }>({});
 
   const loadCaseStudies = async () => {
-    const { data, error } = await supabase
-      .from('case_studies')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const [caseStudiesResult, projectsResult] = await Promise.all([
+      supabase.from('case_studies').select('*').order('created_at', { ascending: false }),
+      supabase.from('projects').select('*').order('order', { ascending: true }),
+    ]);
 
-    if (error) {
-      console.error('Error loading case studies:', error);
-      alert('Failed to load case studies: ' + error.message);
+    if (caseStudiesResult.error) {
+      console.error('Error loading case studies:', caseStudiesResult.error);
+      alert('Failed to load case studies: ' + caseStudiesResult.error.message);
       return;
     }
 
-    setCaseStudies(data || []);
-    setPersistedIds((data || []).map((caseStudy) => caseStudy.id));
+    if (projectsResult.error) {
+      console.error('Error loading projects for case studies:', projectsResult.error);
+      alert('Failed to load projects: ' + projectsResult.error.message);
+      return;
+    }
+
+    setCaseStudies(caseStudiesResult.data || []);
+    setPersistedIds((caseStudiesResult.data || []).map((caseStudy) => caseStudy.id));
+    setProjects(projectsResult.data || []);
   };
 
   useEffect(() => {
@@ -1386,6 +1394,24 @@ function CaseStudiesEditor() {
 
   const updateCaseStudy = (id: string, field: keyof CaseStudy, value: string | string[]) => {
     setCaseStudies(caseStudies.map((cs) => (cs.id === id ? { ...cs, [field]: value } : cs)));
+  };
+
+  const linkCaseStudyToProject = (caseStudyId: string, projectId: string) => {
+    const project = projects.find((item) => item.id === projectId);
+
+    setCaseStudies(caseStudies.map((cs) => {
+      if (cs.id !== caseStudyId) return cs;
+
+      return {
+        ...cs,
+        project_id: projectId,
+        slug: project?.slug || cs.slug,
+        hero_title: cs.hero_title || project?.title || '',
+        hero_title_zh: cs.hero_title_zh || project?.title_zh || '',
+        hero_image: cs.hero_image || project?.image_url || '',
+        cta_link: cs.cta_link || project?.link || '',
+      };
+    }));
   };
 
   const addMethodItem = (id: string, lang: 'en' | 'zh') => {
@@ -1483,15 +1509,15 @@ function CaseStudiesEditor() {
     <div className="max-w-3xl">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h2 className="font-serif italic text-3xl text-stone-900">Case Studies</h2>
-          <p className="text-[14px] text-stone-500 mt-1">Detailed project case studies for the portfolio detail page</p>
+          <h2 className="font-serif italic text-3xl text-stone-900">案例详情</h2>
+          <p className="text-[14px] text-stone-500 mt-1">给作品补充深度内容。普通作品只填 Projects 即可；这里用于补充背景、方法、结果、复盘和图集。</p>
         </div>
         <button
           onClick={addCaseStudy}
           className="flex items-center gap-2 bg-stone-900 text-white px-4 py-2 text-[13px] font-medium rounded-md hover:bg-stone-800 transition-colors"
         >
           <Plus className="w-4 h-4" />
-          Add Case Study
+          添加案例详情
         </button>
       </div>
 
@@ -1528,20 +1554,47 @@ function CaseStudiesEditor() {
 
             {expandedId === cs.id && (
               <div className="p-4 border-t border-stone-200 space-y-6">
+                {/* Project Link */}
+                <div className="space-y-4">
+                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">关联作品</h4>
+                  <select
+                    value={cs.project_id || ''}
+                    onChange={(e) => linkCaseStudyToProject(cs.id, e.target.value)}
+                    className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900 bg-white"
+                  >
+                    <option value="">请选择一个 Projects 里的作品</option>
+                    {projects.map((project) => (
+                      <option key={project.id} value={project.id}>
+                        {project.title_zh || project.title || project.slug || '未命名作品'}
+                      </option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="详情页路径 Slug，例如 reform-index"
+                    value={cs.slug}
+                    onChange={(e) => updateCaseStudy(cs.id, 'slug', e.target.value)}
+                    className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
+                  />
+                  <p className="text-[12px] text-stone-500">
+                    这个 slug 要和对应作品的详情页路径一致。选择作品后会自动带入，也可以手动微调。
+                  </p>
+                </div>
+
                 {/* Hero Section */}
                 <div className="space-y-4">
-                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">Hero Section</h4>
+                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">详情页头图</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <input
                       type="text"
-                      placeholder="Hero Title (EN)"
+                      placeholder="详情页标题（英文，可选）"
                       value={cs.hero_title}
                       onChange={(e) => updateCaseStudy(cs.id, 'hero_title', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="Hero Title (ZH)"
+                      placeholder="详情页标题（中文）"
                       value={cs.hero_title_zh}
                       onChange={(e) => updateCaseStudy(cs.id, 'hero_title_zh', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -1587,60 +1640,60 @@ function CaseStudiesEditor() {
 
                 {/* Project Info */}
                 <div className="space-y-4">
-                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">Project Info</h4>
+                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">项目信息</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <input
                       type="text"
-                      placeholder="Duration (EN)"
+                      placeholder="周期（英文，可选）"
                       value={cs.duration}
                       onChange={(e) => updateCaseStudy(cs.id, 'duration', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="Duration (ZH)"
+                      placeholder="周期（中文）"
                       value={cs.duration_zh}
                       onChange={(e) => updateCaseStudy(cs.id, 'duration_zh', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="Role (EN)"
+                      placeholder="角色（英文，可选）"
                       value={cs.role}
                       onChange={(e) => updateCaseStudy(cs.id, 'role', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="Role (ZH)"
+                      placeholder="角色（中文）"
                       value={cs.role_zh}
                       onChange={(e) => updateCaseStudy(cs.id, 'role_zh', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="Platform (EN)"
+                      placeholder="平台 / 技术（英文，可选）"
                       value={cs.platform}
                       onChange={(e) => updateCaseStudy(cs.id, 'platform', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="Platform (ZH)"
+                      placeholder="平台 / 技术（中文）"
                       value={cs.platform_zh}
                       onChange={(e) => updateCaseStudy(cs.id, 'platform_zh', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="Client (EN)"
+                      placeholder="客户 / 类型（英文，可选）"
                       value={cs.client}
                       onChange={(e) => updateCaseStudy(cs.id, 'client', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="Client (ZH)"
+                      placeholder="客户 / 类型（中文）"
                       value={cs.client_zh}
                       onChange={(e) => updateCaseStudy(cs.id, 'client_zh', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -1650,17 +1703,17 @@ function CaseStudiesEditor() {
 
                 {/* Background */}
                 <div className="space-y-4">
-                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">Background</h4>
+                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">项目背景</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <textarea
-                      placeholder="Background Content (EN)"
+                      placeholder="项目背景（英文，可选）"
                       value={cs.background_content}
                       onChange={(e) => updateCaseStudy(cs.id, 'background_content', e.target.value)}
                       rows={4}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900 resize-none"
                     />
                     <textarea
-                      placeholder="Background Content (ZH)"
+                      placeholder="项目背景（中文）"
                       value={cs.background_content_zh}
                       onChange={(e) => updateCaseStudy(cs.id, 'background_content_zh', e.target.value)}
                       rows={4}
@@ -1671,17 +1724,17 @@ function CaseStudiesEditor() {
 
                 {/* My Role */}
                 <div className="space-y-4">
-                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">My Role</h4>
+                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">我的角色</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <textarea
-                      placeholder="My Role Content (EN)"
+                      placeholder="我的角色（英文，可选）"
                       value={cs.my_role_content}
                       onChange={(e) => updateCaseStudy(cs.id, 'my_role_content', e.target.value)}
                       rows={4}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900 resize-none"
                     />
                     <textarea
-                      placeholder="My Role Content (ZH)"
+                      placeholder="我的角色（中文）"
                       value={cs.my_role_content_zh}
                       onChange={(e) => updateCaseStudy(cs.id, 'my_role_content_zh', e.target.value)}
                       rows={4}
@@ -1692,17 +1745,17 @@ function CaseStudiesEditor() {
 
                 {/* Method */}
                 <div className="space-y-4">
-                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">Method</h4>
+                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">方法过程</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <textarea
-                      placeholder="Method Intro (EN)"
+                      placeholder="方法介绍（英文，可选）"
                       value={cs.method_intro}
                       onChange={(e) => updateCaseStudy(cs.id, 'method_intro', e.target.value)}
                       rows={2}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900 resize-none"
                     />
                     <textarea
-                      placeholder="Method Intro (ZH)"
+                      placeholder="方法介绍（中文）"
                       value={cs.method_intro_zh}
                       onChange={(e) => updateCaseStudy(cs.id, 'method_intro_zh', e.target.value)}
                       rows={2}
@@ -1711,7 +1764,7 @@ function CaseStudiesEditor() {
                   </div>
                   {/* Method Items */}
                   <div className="space-y-2">
-                    <label className="text-[12px] text-stone-500">Method Items (EN)</label>
+                    <label className="text-[12px] text-stone-500">方法步骤（英文，可选）</label>
                     {(cs.method_items || []).map((item, i) => (
                       <input
                         key={i}
@@ -1722,7 +1775,7 @@ function CaseStudiesEditor() {
                           newItems[i] = e.target.value;
                           updateCaseStudy(cs.id, 'method_items', newItems);
                         }}
-                        placeholder={`Item ${i + 1}`}
+                        placeholder={`Step ${i + 1}`}
                         className="w-full px-4 py-2 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                       />
                     ))}
@@ -1731,39 +1784,78 @@ function CaseStudiesEditor() {
                       className="flex items-center gap-2 text-[13px] text-stone-600 hover:text-stone-900"
                     >
                       <Plus className="w-4 h-4" />
-                      Add Item
+                      添加英文步骤
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[12px] text-stone-500">方法步骤（中文）</label>
+                    {(cs.method_items_zh || []).map((item, i) => (
+                      <input
+                        key={i}
+                        type="text"
+                        value={item}
+                        onChange={(e) => {
+                          const newItems = [...(cs.method_items_zh || [])];
+                          newItems[i] = e.target.value;
+                          updateCaseStudy(cs.id, 'method_items_zh', newItems);
+                        }}
+                        placeholder={`步骤 ${i + 1}`}
+                        className="w-full px-4 py-2 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
+                      />
+                    ))}
+                    <button
+                      onClick={() => addMethodItem(cs.id, 'zh')}
+                      className="flex items-center gap-2 text-[13px] text-stone-600 hover:text-stone-900"
+                    >
+                      <Plus className="w-4 h-4" />
+                      添加中文步骤
                     </button>
                   </div>
                 </div>
 
                 {/* Results */}
                 <div className="space-y-4">
-                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">Results</h4>
+                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">结果数据</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <input
                       type="text"
-                      placeholder="Stat 1 Label (EN)"
+                      placeholder="数据 1 说明（英文，可选）"
                       value={cs.result_stat1_label}
                       onChange={(e) => updateCaseStudy(cs.id, 'result_stat1_label', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="Stat 1 Label (ZH)"
+                      placeholder="数据 1 说明（中文）"
                       value={cs.result_stat1_label_zh}
                       onChange={(e) => updateCaseStudy(cs.id, 'result_stat1_label_zh', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="Stat 1 Value (e.g., 45%)"
+                      placeholder="数据 1 数值，例如 45%"
                       value={cs.result_stat1_value}
                       onChange={(e) => updateCaseStudy(cs.id, 'result_stat1_value', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="Stat 2 Value"
+                      placeholder="数据 2 说明（英文，可选）"
+                      value={cs.result_stat2_label}
+                      onChange={(e) => updateCaseStudy(cs.id, 'result_stat2_label', e.target.value)}
+                      className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
+                    />
+                    <input
+                      type="text"
+                      placeholder="数据 2 说明（中文）"
+                      value={cs.result_stat2_label_zh}
+                      onChange={(e) => updateCaseStudy(cs.id, 'result_stat2_label_zh', e.target.value)}
+                      className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
+                    />
+
+                    <input
+                      type="text"
+                      placeholder="数据 2 数值，例如 4.8/5"
                       value={cs.result_stat2_value}
                       onChange={(e) => updateCaseStudy(cs.id, 'result_stat2_value', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -1773,17 +1865,17 @@ function CaseStudiesEditor() {
 
                 {/* Reflection */}
                 <div className="space-y-4">
-                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">Reflection</h4>
+                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">复盘</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <textarea
-                      placeholder="Reflection Content (EN)"
+                      placeholder="复盘内容（英文，可选）"
                       value={cs.reflection_content}
                       onChange={(e) => updateCaseStudy(cs.id, 'reflection_content', e.target.value)}
                       rows={4}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900 resize-none"
                     />
                     <textarea
-                      placeholder="Reflection Content (ZH)"
+                      placeholder="复盘内容（中文）"
                       value={cs.reflection_content_zh}
                       onChange={(e) => updateCaseStudy(cs.id, 'reflection_content_zh', e.target.value)}
                       rows={4}
@@ -1794,32 +1886,32 @@ function CaseStudiesEditor() {
 
                 {/* CTA */}
                 <div className="space-y-4">
-                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">CTA Section</h4>
+                  <h4 className="text-[13px] font-medium text-stone-900 uppercase tracking-wider">跳转按钮</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <input
                       type="text"
-                      placeholder="CTA Title (EN)"
+                      placeholder="按钮区标题（英文，可选）"
                       value={cs.cta_title}
                       onChange={(e) => updateCaseStudy(cs.id, 'cta_title', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="CTA Title (ZH)"
+                      placeholder="按钮区标题（中文）"
                       value={cs.cta_title_zh}
                       onChange={(e) => updateCaseStudy(cs.id, 'cta_title_zh', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="Button Text (EN)"
+                      placeholder="按钮文字（英文，可选）"
                       value={cs.cta_button_text}
                       onChange={(e) => updateCaseStudy(cs.id, 'cta_button_text', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                     />
                     <input
                       type="text"
-                      placeholder="Button Text (ZH)"
+                      placeholder="按钮文字（中文）"
                       value={cs.cta_button_text_zh}
                       onChange={(e) => updateCaseStudy(cs.id, 'cta_button_text_zh', e.target.value)}
                       className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -1827,7 +1919,7 @@ function CaseStudiesEditor() {
                   </div>
                   <input
                     type="text"
-                    placeholder="CTA Link URL"
+                    placeholder="跳转网址，例如 Streamlit / GitHub / 在线演示"
                     value={cs.cta_link}
                     onChange={(e) => updateCaseStudy(cs.id, 'cta_link', e.target.value)}
                     className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -1841,14 +1933,14 @@ function CaseStudiesEditor() {
         {caseStudies.length === 0 && (
           <div className="text-center py-12 bg-stone-50 rounded-lg border border-dashed border-stone-300">
             <FileText className="w-12 h-12 text-stone-300 mx-auto mb-4" />
-            <p className="text-[14px] text-stone-500">No case studies yet. Click "Add Case Study" to create one.</p>
+            <p className="text-[14px] text-stone-500">还没有案例详情。点击“添加案例详情”创建一个。</p>
           </div>
         )}
       </div>
 
       <button onClick={handleSave} disabled={isSaving} className={`mt-6 ${buttonClass}`}>
         <Save className="w-4 h-4" />
-        {isSaving ? 'Saving...' : 'Save Case Studies'}
+        {isSaving ? 'Saving...' : '保存案例详情'}
       </button>
     </div>
   );
@@ -2018,14 +2110,14 @@ function ServicesEditor() {
                 <div className="grid grid-cols-2 gap-4">
                   <input
                     type="text"
-                    placeholder="Title (English)"
+                    placeholder="服务标题（英文，可选）"
                     value={service.title}
                     onChange={(e) => updateService(service.id, 'title', e.target.value)}
                     className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
                   />
                   <input
                     type="text"
-                    placeholder="Title (Chinese)"
+                    placeholder="服务标题（中文）"
                     value={service.title_zh}
                     onChange={(e) => updateService(service.id, 'title_zh', e.target.value)}
                     className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -2034,14 +2126,14 @@ function ServicesEditor() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <textarea
-                    placeholder="Description (English)"
+                    placeholder="服务描述（英文，可选）"
                     value={service.description}
                     onChange={(e) => updateService(service.id, 'description', e.target.value)}
                     rows={3}
                     className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900 resize-none"
                   />
                   <textarea
-                    placeholder="Description (Chinese)"
+                    placeholder="服务描述（中文）"
                     value={service.description_zh}
                     onChange={(e) => updateService(service.id, 'description_zh', e.target.value)}
                     rows={3}
@@ -2081,14 +2173,14 @@ function ServicesEditor() {
           <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
-              placeholder="CTA Title (EN)"
+              placeholder="按钮区标题（英文，可选）"
               value={cta.title}
               onChange={(e) => setCta({ ...cta, title: e.target.value })}
               className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
             />
             <input
               type="text"
-              placeholder="CTA Title (ZH)"
+              placeholder="按钮区标题（中文）"
               value={cta.titleZh}
               onChange={(e) => setCta({ ...cta, titleZh: e.target.value })}
               className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -2113,14 +2205,14 @@ function ServicesEditor() {
           <div className="grid grid-cols-2 gap-4">
             <input
               type="text"
-              placeholder="Button Text (EN)"
+              placeholder="按钮文字（英文，可选）"
               value={cta.button}
               onChange={(e) => setCta({ ...cta, button: e.target.value })}
               className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
             />
             <input
               type="text"
-              placeholder="Button Text (ZH)"
+              placeholder="按钮文字（中文）"
               value={cta.buttonZh}
               onChange={(e) => setCta({ ...cta, buttonZh: e.target.value })}
               className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
