@@ -22,6 +22,12 @@ function HeroSection({
   secondaryCta: { label: string; to: string };
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
+  const handlePrimaryClick = () => {
+    if (primaryCta.to.startsWith('#')) {
+      const target = document.querySelector(primaryCta.to);
+      target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
 
   return (
     <section className="relative w-full min-h-[700px] overflow-hidden -mt-[88px] pt-[88px]">
@@ -74,13 +80,14 @@ function HeroSection({
               isLoaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-6'
             }`}
           >
-            <Link
-              to={primaryCta.to}
+            <button
+              type="button"
+              onClick={handlePrimaryClick}
               className="inline-flex items-center gap-2 rounded-full bg-stone-900 px-7 py-3.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-white shadow-[0_20px_40px_rgba(28,25,23,0.18)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-stone-800"
             >
               <span>{primaryCta.label}</span>
               <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
+            </button>
             <Link
               to={secondaryCta.to}
               className="inline-flex items-center rounded-full border border-stone-900/12 bg-white/68 px-7 py-3.5 text-[12px] font-semibold uppercase tracking-[0.18em] text-stone-800 backdrop-blur-md shadow-[0_12px_30px_rgba(28,25,23,0.06)] transition-all duration-300 hover:bg-white"
