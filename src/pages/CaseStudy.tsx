@@ -90,7 +90,7 @@ export function CaseStudy() {
   const ctaTitle = pickText(caseStudy?.cta_title_zh, caseStudy?.cta_title, isZh ? '查看项目' : 'View the project');
   const ctaButtonText = pickText(caseStudy?.cta_button_text_zh, caseStudy?.cta_button_text, isZh ? '打开链接' : 'Open Link');
   const ctaLink = caseStudy?.cta_link || project?.link || '';
-  const galleryImages = caseStudy?.gallery_images?.length ? caseStudy.gallery_images : [heroImage].filter(Boolean);
+  const galleryImages = caseStudy?.gallery_images?.length ? caseStudy.gallery_images : [];
   const galleryCaptions = isZh && caseStudy?.gallery_captions_zh?.length ? caseStudy.gallery_captions_zh : caseStudy?.gallery_captions || [];
 
   const navWork = isZh ? content.navWorkZh : content.navWork;
@@ -148,18 +148,6 @@ export function CaseStudy() {
           >
             {heroTitle}
           </motion.h1>
-
-          {projectDescription && (
-            <motion.p
-              className="max-w-3xl text-[16px] md:text-[18px] text-stone-600 leading-[1.8]"
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true }}
-              variants={fadeInUp}
-            >
-              {projectDescription}
-            </motion.p>
-          )}
         </div>
       </section>
 
