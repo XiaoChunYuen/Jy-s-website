@@ -1,73 +1,8 @@
-import type * as React from 'react';
 import { motion } from 'framer-motion';
+import { Download, ExternalLink, FileText } from 'lucide-react';
 import { useCMS } from '../cms/CMSContext';
 import { useLanguage } from '../i18n/LanguageContext';
-import { Download, Eye, GraduationCap, Briefcase, Trophy, Users, Sparkles } from 'lucide-react';
 import { fadeInUpCompact, staggerContainerCompact, staggerItemCompact } from '../shared/animations';
-
-interface ResumeItem {
-  title: string;
-  subtitle: string;
-  period: string;
-  description?: string;
-}
-
-interface SectionProps {
-  icon: React.ReactNode;
-  title: string;
-  items: ResumeItem[];
-  index: number;
-}
-
-function Section({ icon, title, items, index }: SectionProps) {
-  return (
-    <motion.section
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount: 0.15 }}
-      variants={staggerContainerCompact}
-      className="border-t border-stone-200 py-10 md:py-12"
-    >
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-12">
-        {/* Left: Section Title */}
-        <motion.div variants={staggerItemCompact} className="md:col-span-3">
-          <div className="flex items-center gap-2 text-stone-400">
-            {icon}
-            <span className="text-[11px] font-semibold tracking-[0.2em] uppercase">
-              {title}
-            </span>
-          </div>
-        </motion.div>
-
-        {/* Right: Content */}
-        <div className="md:col-span-9">
-          <div className="space-y-8">
-            {items.map((item, idx) => (
-              <motion.div
-                key={idx}
-                variants={staggerItemCompact}
-                className="group"
-              >
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-baseline gap-1 mb-1">
-                  <h3 className="text-[15px] font-medium text-stone-900">{item.title}</h3>
-                  <span className="text-[12px] text-stone-400 tracking-wide">
-                    {item.period}
-                  </span>
-                </div>
-
-                <div className="text-[13px] text-stone-500 mb-2">{item.subtitle}</div>
-
-                {item.description && (
-                  <p className="text-[13px] text-stone-600 leading-relaxed">{item.description}</p>
-                )}
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </motion.section>
-  );
-}
 
 export function Resume() {
   const { content, isLoading } = useCMS();
@@ -82,187 +17,89 @@ export function Resume() {
   }
 
   const isZh = language === 'zh';
-
-  // Use CMS data if available, otherwise fallback to translations
-  const educationList: ResumeItem[] = content.resumeEducations?.length > 0
-    ? content.resumeEducations.map((edu: any) => ({
-        title: isZh ? edu.degree_zh || edu.degree : edu.degree,
-        subtitle: isZh ? edu.school_zh || edu.school : edu.school,
-        period: edu.period,
-        description: isZh ? edu.description_zh || edu.description : edu.description
-      }))
-    : t.resume.educationList;
-
-  const experienceList: ResumeItem[] = content.resumeExperiences?.length > 0
-    ? content.resumeExperiences.map((item: any) => ({
-        title: isZh ? item.title_zh || item.title : item.title,
-        subtitle: isZh ? item.company_zh || item.company : item.company,
-        period: item.period,
-        description: isZh ? item.description_zh || item.description : item.description
-      }))
-    : [];
-
-  const internshipList: ResumeItem[] = content.resumeInternships?.length > 0
-    ? content.resumeInternships.map((item: any) => ({
-        title: isZh ? item.title_zh || item.title : item.title,
-        subtitle: isZh ? item.company_zh || item.company : item.company,
-        period: item.period,
-        description: isZh ? item.description_zh || item.description : item.description
-      }))
-    : t.resume.internshipList;
-
-  const competitionList: ResumeItem[] = content.resumeCompetitions?.length > 0
-    ? content.resumeCompetitions.map((item: any) => ({
-        title: isZh ? item.title_zh || item.title : item.title,
-        subtitle: isZh ? item.organizer_zh || item.organizer : item.organizer,
-        period: item.period,
-        description: isZh ? item.description_zh || item.description : item.description
-      }))
-    : t.resume.competitionList;
-
-  const campusList: ResumeItem[] = content.resumeCampus?.length > 0
-    ? content.resumeCampus.map((item: any) => ({
-        title: isZh ? item.title_zh || item.title : item.title,
-        subtitle: isZh ? item.organization_zh || item.organization : item.organization,
-        period: item.period,
-        description: isZh ? item.description_zh || item.description : item.description
-      }))
-    : t.resume.campusList;
-
-  const hasResumeFile = content.resumeFile?.file_url;
+  const resumeUrl = content.resumeFile?.file_url || '';
   const resumeTitle = isZh ? content.resumeHeaderTitleZh : content.resumeHeaderTitle;
-  const educationTitle = isZh ? content.resumeEducationLabelZh : content.resumeEducationLabel;
-  const experienceTitle = isZh ? content.resumeExperienceLabelZh : content.resumeExperienceLabel;
-  const skillsTitle = isZh ? content.resumeSkillsLabelZh : content.resumeSkillsLabel;
   const downloadText = isZh ? content.resumeDownloadTextZh : content.resumeDownloadText;
+  const pageTitle = resumeTitle || (isZh ? '个人简历' : 'Resume');
+  const openText = isZh ? '新窗口打开' : 'Open';
+  const emptyText = isZh
+    ? '还没有上传简历 PDF。请先在后台上传文件。'
+    : 'No resume PDF has been uploaded yet.';
 
   return (
     <main className="w-full min-h-screen bg-white">
-      {/* Header */}
-      <section className="pt-16 pb-6 md:pt-20 md:pb-8">
-        <div className="max-w-3xl mx-auto px-6">
+      <section className="pt-16 pb-8 md:pt-20">
+        <div className="max-w-6xl mx-auto px-6">
           <motion.div
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
+            animate="visible"
             variants={staggerContainerCompact}
-            className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4"
+            className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between"
           >
             <div>
               <motion.div variants={staggerItemCompact} className="mb-3">
-                <span className="inline-flex items-center px-3 py-1.5 bg-stone-100 text-stone-600 text-[10px] font-medium tracking-wider uppercase rounded-full">
+                <span className="inline-flex items-center px-3 py-1.5 bg-stone-100 text-stone-600 text-[10px] font-medium tracking-[0.2em] uppercase rounded-full">
                   {t.resume.subtitle}
                 </span>
               </motion.div>
-
               <motion.h1
                 variants={staggerItemCompact}
-                className="font-serif italic text-3xl md:text-4xl text-stone-900"
+                className="font-serif italic text-4xl md:text-5xl text-stone-900"
               >
-                {resumeTitle || (isZh ? '\u4e2a\u4eba\u7b80\u5386' : 'Resume')}
+                {pageTitle}
               </motion.h1>
             </div>
 
-            {/* PDF Actions */}
-            <motion.div variants={staggerItemCompact} className="flex items-center gap-2">
-              {hasResumeFile ? (
-                <>
-                  <a
-                    href={content.resumeFile.file_url}
-                    download
-                    className="inline-flex items-center gap-1.5 px-4 py-2 bg-stone-900 text-white text-[11px] font-medium rounded-full hover:bg-stone-800 transition-colors"
-                  >
-                    <Download className="w-3.5 h-3.5" />
-                    {downloadText || t.resume.downloadPDF}
-                  </a>
-                  <a
-                    href={content.resumeFile.file_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-stone-600 bg-stone-100 text-[11px] font-medium rounded-full hover:bg-stone-200 transition-colors"
-                  >
-                    <Eye className="w-3.5 h-3.5" />
-                    {t.resume.previewPDF}
-                  </a>
-                </>
-              ) : (
-                <span className="text-[12px] text-stone-400 italic">
-                  {t.resume.noFile}
-                </span>
-              )}
-            </motion.div>
+            {resumeUrl && (
+              <motion.div variants={staggerItemCompact} className="flex flex-wrap items-center gap-2">
+                <a
+                  href={resumeUrl}
+                  download
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-stone-900 text-white text-[11px] font-medium rounded-full hover:bg-stone-800 transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  {downloadText || t.resume.downloadPDF}
+                </a>
+                <a
+                  href={resumeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-stone-600 bg-stone-100 text-[11px] font-medium rounded-full hover:bg-stone-200 transition-colors"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  {openText}
+                </a>
+              </motion.div>
+            )}
           </motion.div>
         </div>
       </section>
 
-      {/* Resume Content */}
-      <section className="pb-20 md:pb-28">
-        <div className="max-w-3xl mx-auto px-6">
-          <Section
-            icon={<GraduationCap className="w-4 h-4" />}
-            title={educationTitle || t.resume.education}
-            items={educationList}
-            index={0}
-          />
-
-          {experienceList.length > 0 && (
-            <Section
-              icon={<Briefcase className="w-4 h-4" />}
-              title={experienceTitle || 'Experience'}
-              items={experienceList}
-              index={1}
-            />
-          )}
-
-          <Section
-            icon={<Briefcase className="w-4 h-4" />}
-            title={t.resume.internship}
-            items={internshipList}
-            index={2}
-          />
-
-          <Section
-            icon={<Trophy className="w-4 h-4" />}
-            title={t.resume.competition}
-            items={competitionList}
-            index={3}
-          />
-
-          <Section
-            icon={<Users className="w-4 h-4" />}
-            title={t.resume.campus}
-            items={campusList}
-            index={4}
-          />
-
-          {content.resumeSkills?.length > 0 && (
-            <motion.section
+      <section className="pb-16 md:pb-24">
+        <div className="max-w-6xl mx-auto px-6">
+          {resumeUrl ? (
+            <motion.div
               initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.15 }}
-              variants={staggerContainerCompact}
-              className="border-t border-stone-200 py-10 md:py-12"
+              animate="visible"
+              variants={fadeInUpCompact}
+              className="overflow-hidden border border-stone-200 bg-stone-100 shadow-[0_24px_80px_rgba(28,25,23,0.08)]"
             >
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-12">
-                <motion.div variants={staggerItemCompact} className="md:col-span-3">
-                  <div className="flex items-center gap-2 text-stone-400">
-                    <Sparkles className="w-4 h-4" />
-                    <span className="text-[11px] font-semibold tracking-[0.2em] uppercase">
-                      {skillsTitle || 'Skills'}
-                    </span>
-                  </div>
-                </motion.div>
-                <motion.div variants={staggerItemCompact} className="md:col-span-9">
-                  <div className="flex flex-wrap gap-2">
-                    {content.resumeSkills.map((skill: any) => (
-                      <span key={skill.id} className="rounded-full bg-stone-100 px-3 py-1.5 text-[12px] text-stone-600">
-                        {skill.name}
-                      </span>
-                    ))}
-                  </div>
-                </motion.div>
-              </div>
-            </motion.section>
+              <iframe
+                title={pageTitle}
+                src={`${resumeUrl}#view=FitH`}
+                className="h-[76vh] min-h-[640px] w-full bg-white"
+              />
+            </motion.div>
+          ) : (
+            <motion.div
+              initial="hidden"
+              animate="visible"
+              variants={fadeInUpCompact}
+              className="flex min-h-[420px] flex-col items-center justify-center border border-dashed border-stone-300 bg-stone-50 px-6 text-center"
+            >
+              <FileText className="mb-4 h-10 w-10 text-stone-300" />
+              <p className="text-[14px] text-stone-500">{emptyText}</p>
+            </motion.div>
           )}
         </div>
       </section>

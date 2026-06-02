@@ -2233,157 +2233,33 @@ function ServicesEditor() {
 // Resume Editor
 // ============================================
 function ResumeEditor() {
-  const [experiences, setExperiences] = useState<ResumeExperience[]>([]);
-  const [educations, setEducations] = useState<ResumeEducation[]>([]);
-  const [skills, setSkills] = useState<ResumeSkill[]>([]);
-  const [persistedExperienceIds, setPersistedExperienceIds] = useState<string[]>([]);
-  const [persistedEducationIds, setPersistedEducationIds] = useState<string[]>([]);
-  const [persistedSkillIds, setPersistedSkillIds] = useState<string[]>([]);
   const [resumeFileId, setResumeFileId] = useState<string>('');
   const [resumeFileName, setResumeFileName] = useState<string>('');
-  const [isSaving, setIsSaving] = useState(false);
-  const [isUploadingResume, setIsUploadingResume] = useState(false);
   const [resumeFile, setResumeFile] = useState<string>('');
-  const [labels, setLabels] = useState({
-    headerTitle: '',
-    headerTitleZh: '',
-    experience: '',
-    experienceZh: '',
-    education: '',
-    educationZh: '',
-    skills: '',
-    skillsZh: '',
-    download: '',
-    downloadZh: ''
-  });
+  const [isUploadingResume, setIsUploadingResume] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadResume = async () => {
-    const [settings, experienceResult, educationResult, skillResult, fileResult] = await Promise.all([
-      loadSiteSettings([
-        'resume_header_title',
-        'resume_header_title_zh',
-        'resume_experience_label',
-        'resume_experience_label_zh',
-        'resume_education_label',
-        'resume_education_label_zh',
-        'resume_skills_label',
-        'resume_skills_label_zh',
-        'resume_download_text',
-        'resume_download_text_zh',
-      ]),
-      supabase.from('resume_experience').select('*').order('order', { ascending: true }),
-      supabase.from('resume_education').select('*').order('order', { ascending: true }),
-      supabase.from('resume_skills').select('*').order('order', { ascending: true }),
-      supabase
-        .from('resume_files')
-        .select('*')
-        .order('updated_at', { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-    ]);
+    const { data, error } = await supabase
+      .from('resume_files')
+      .select('*')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (experienceResult.error) throw experienceResult.error;
-    if (educationResult.error) throw educationResult.error;
-    if (skillResult.error) throw skillResult.error;
-    if (fileResult.error) throw fileResult.error;
+    if (error) throw error;
 
-    setLabels({
-      headerTitle: settings.resume_header_title || '',
-      headerTitleZh: settings.resume_header_title_zh || '',
-      experience: settings.resume_experience_label || '',
-      experienceZh: settings.resume_experience_label_zh || '',
-      education: settings.resume_education_label || '',
-      educationZh: settings.resume_education_label_zh || '',
-      skills: settings.resume_skills_label || '',
-      skillsZh: settings.resume_skills_label_zh || '',
-      download: settings.resume_download_text || '',
-      downloadZh: settings.resume_download_text_zh || '',
-    });
-    setExperiences(experienceResult.data || []);
-    setEducations(educationResult.data || []);
-    setSkills(skillResult.data || []);
-    setPersistedExperienceIds((experienceResult.data || []).map((item) => item.id));
-    setPersistedEducationIds((educationResult.data || []).map((item) => item.id));
-    setPersistedSkillIds((skillResult.data || []).map((item) => item.id));
-    setResumeFileId(fileResult.data?.id || '');
-    setResumeFile(fileResult.data?.file_url || '');
-    setResumeFileName(fileResult.data?.file_name || '');
+    setResumeFileId(data?.id || '');
+    setResumeFile(data?.file_url || '');
+    setResumeFileName(data?.file_name || '');
   };
 
   useEffect(() => {
     loadResume().catch((error) => {
-      console.error('Error loading resume editor:', error);
-      alert('Failed to load resume editor: ' + (error as Error).message);
+      console.error('Error loading resume file:', error);
+      alert('加载简历文件失败：' + (error as Error).message);
     });
   }, []);
-
-  const addExperience = () => {
-    const newExp: ResumeExperience = {
-      id: `temp-${Date.now()}`,
-      title: '',
-      title_zh: '',
-      company: '',
-      company_zh: '',
-      period: '',
-      description: '',
-      description_zh: '',
-      order: experiences.length + 1,
-      is_active: true,
-      created_at: new Date().toISOString(),
-    };
-    setExperiences([...experiences, newExp]);
-  };
-
-  const removeExperience = (id: string) => {
-    setExperiences(experiences.filter((e) => e.id !== id));
-  };
-
-  const updateExperience = (id: string, field: keyof ResumeExperience, value: string) => {
-    setExperiences(experiences.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
-  };
-
-  const addEducation = () => {
-    const newEdu: ResumeEducation = {
-      id: `temp-${Date.now()}`,
-      degree: '',
-      degree_zh: '',
-      school: '',
-      school_zh: '',
-      period: '',
-      order: educations.length + 1,
-      is_active: true,
-      created_at: new Date().toISOString(),
-    };
-    setEducations([...educations, newEdu]);
-  };
-
-  const removeEducation = (id: string) => {
-    setEducations(educations.filter((e) => e.id !== id));
-  };
-
-  const updateEducation = (id: string, field: keyof ResumeEducation, value: string) => {
-    setEducations(educations.map((e) => (e.id === id ? { ...e, [field]: value } : e)));
-  };
-
-  const addSkill = () => {
-    const newSkill: ResumeSkill = {
-      id: `temp-${Date.now()}`,
-      name: '',
-      order: skills.length + 1,
-      is_active: true,
-      created_at: new Date().toISOString(),
-    };
-    setSkills([...skills, newSkill]);
-  };
-
-  const removeSkill = (id: string) => {
-    setSkills(skills.filter((s) => s.id !== id));
-  };
-
-  const updateSkill = (id: string, value: string) => {
-    setSkills(skills.map((s) => (s.id === id ? { ...s, name: value } : s)));
-  };
 
   const handlePDFUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -2435,201 +2311,17 @@ function ResumeEditor() {
     }
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await saveSiteSettings([
-        { key: 'resume_header_title', value: labels.headerTitle },
-        { key: 'resume_header_title_zh', value: labels.headerTitleZh },
-        { key: 'resume_experience_label', value: labels.experience },
-        { key: 'resume_experience_label_zh', value: labels.experienceZh },
-        { key: 'resume_education_label', value: labels.education },
-        { key: 'resume_education_label_zh', value: labels.educationZh },
-        { key: 'resume_skills_label', value: labels.skills },
-        { key: 'resume_skills_label_zh', value: labels.skillsZh },
-        { key: 'resume_download_text', value: labels.download },
-        { key: 'resume_download_text_zh', value: labels.downloadZh },
-      ]);
-
-      if (resumeFile) {
-        const row = {
-          file_url: resumeFile,
-          file_name: resumeFileName || 'resume.pdf',
-          updated_at: new Date().toISOString(),
-        };
-        const { error } = resumeFileId
-          ? await supabase.from('resume_files').update(row).eq('id', resumeFileId)
-          : await supabase.from('resume_files').insert(row);
-
-        if (error) throw error;
-      }
-
-      const currentExperienceIds = experiences.filter((item) => isPersistedId(item.id)).map((item) => item.id);
-      const removedExperienceIds = persistedExperienceIds.filter((id) => !currentExperienceIds.includes(id));
-      if (removedExperienceIds.length > 0) {
-        const { error } = await supabase.from('resume_experience').delete().in('id', removedExperienceIds);
-        if (error) throw error;
-      }
-
-      for (const [index, exp] of experiences.entries()) {
-        const row = {
-          title: exp.title,
-          title_zh: exp.title_zh,
-          company: exp.company,
-          company_zh: exp.company_zh,
-          period: exp.period,
-          description: exp.description,
-          description_zh: exp.description_zh,
-          order: index + 1,
-          is_active: exp.is_active,
-        };
-        const { error } = isPersistedId(exp.id)
-          ? await supabase.from('resume_experience').update(row).eq('id', exp.id)
-          : await supabase.from('resume_experience').insert(row);
-        if (error) throw error;
-      }
-
-      const currentEducationIds = educations.filter((item) => isPersistedId(item.id)).map((item) => item.id);
-      const removedEducationIds = persistedEducationIds.filter((id) => !currentEducationIds.includes(id));
-      if (removedEducationIds.length > 0) {
-        const { error } = await supabase.from('resume_education').delete().in('id', removedEducationIds);
-        if (error) throw error;
-      }
-
-      for (const [index, edu] of educations.entries()) {
-        const row = {
-          degree: edu.degree,
-          degree_zh: edu.degree_zh,
-          school: edu.school,
-          school_zh: edu.school_zh,
-          period: edu.period,
-          order: index + 1,
-          is_active: edu.is_active,
-        };
-        const { error } = isPersistedId(edu.id)
-          ? await supabase.from('resume_education').update(row).eq('id', edu.id)
-          : await supabase.from('resume_education').insert(row);
-        if (error) throw error;
-      }
-
-      const currentSkillIds = skills.filter((item) => isPersistedId(item.id)).map((item) => item.id);
-      const removedSkillIds = persistedSkillIds.filter((id) => !currentSkillIds.includes(id));
-      if (removedSkillIds.length > 0) {
-        const { error } = await supabase.from('resume_skills').delete().in('id', removedSkillIds);
-        if (error) throw error;
-      }
-
-      for (const [index, skill] of skills.entries()) {
-        const row = {
-          name: skill.name,
-          order: index + 1,
-          is_active: skill.is_active,
-        };
-        const { error } = isPersistedId(skill.id)
-          ? await supabase.from('resume_skills').update(row).eq('id', skill.id)
-          : await supabase.from('resume_skills').insert(row);
-        if (error) throw error;
-      }
-
-      await loadResume();
-      alert('Resume saved successfully!');
-    } catch (error) {
-      console.error('Resume save error:', error);
-      alert('Failed to save resume: ' + (error as Error).message);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   return (
     <div className="max-w-3xl space-y-8">
       <div>
-        <h2 className="font-serif italic text-3xl text-stone-900 mb-2">简历</h2>
-        <p className="text-[14px] text-stone-500">编辑简历页面内容、经历、教育、技能和 PDF 文件。</p>
+        <h2 className="font-serif italic text-3xl text-stone-900 mb-2">简历 PDF</h2>
+        <p className="text-[14px] text-stone-500">这里只需要上传或替换最终版简历 PDF。前台简历页会直接展示这个文件。</p>
       </div>
 
-      {/* Labels */}
-      <div className="bg-white p-6 rounded-lg border border-stone-200">
-        <h3 className="text-[14px] font-medium text-stone-900 mb-4">页面标题与按钮文字</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <input
-            type="text"
-            placeholder="页面主标题（英文，可选）"
-            value={labels.headerTitle}
-            onChange={(e) => setLabels({ ...labels, headerTitle: e.target.value })}
-            className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-          />
-          <input
-            type="text"
-            placeholder="页面主标题（中文）"
-            value={labels.headerTitleZh}
-            onChange={(e) => setLabels({ ...labels, headerTitleZh: e.target.value })}
-            className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-          />
-          <input
-            type="text"
-            placeholder="工作经历标题（英文，可选）"
-            value={labels.experience}
-            onChange={(e) => setLabels({ ...labels, experience: e.target.value })}
-            className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-          />
-          <input
-            type="text"
-            placeholder="工作经历标题（中文）"
-            value={labels.experienceZh}
-            onChange={(e) => setLabels({ ...labels, experienceZh: e.target.value })}
-            className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-          />
-          <input
-            type="text"
-            placeholder="教育背景标题（英文，可选）"
-            value={labels.education}
-            onChange={(e) => setLabels({ ...labels, education: e.target.value })}
-            className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-          />
-          <input
-            type="text"
-            placeholder="教育背景标题（中文）"
-            value={labels.educationZh}
-            onChange={(e) => setLabels({ ...labels, educationZh: e.target.value })}
-            className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-          />
-          <input
-            type="text"
-            placeholder="技能标题（英文，可选）"
-            value={labels.skills}
-            onChange={(e) => setLabels({ ...labels, skills: e.target.value })}
-            className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-          />
-          <input
-            type="text"
-            placeholder="技能标题（中文）"
-            value={labels.skillsZh}
-            onChange={(e) => setLabels({ ...labels, skillsZh: e.target.value })}
-            className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-          />
-          <input
-            type="text"
-            placeholder="下载按钮文字（英文，可选）"
-            value={labels.download}
-            onChange={(e) => setLabels({ ...labels, download: e.target.value })}
-            className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-          />
-          <input
-            type="text"
-            placeholder="下载按钮文字（中文）"
-            value={labels.downloadZh}
-            onChange={(e) => setLabels({ ...labels, downloadZh: e.target.value })}
-            className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-          />
-        </div>
-      </div>
-
-      {/* PDF Upload */}
       <div className="bg-white p-6 rounded-lg border border-stone-200">
         <h3 className="text-[14px] font-medium text-stone-900 mb-4 flex items-center gap-2">
           <FileText className="w-4 h-4" />
-          简历 PDF
+          当前简历文件
         </h3>
         <div className="border-2 border-dashed border-stone-300 rounded-lg p-8 text-center">
           <input
@@ -2661,7 +2353,7 @@ function ResumeEditor() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={isUploadingResume}
-                  className="text-[13px] text-stone-600 hover:text-stone-900"
+                  className="text-[13px] text-stone-600 hover:text-stone-900 disabled:opacity-50"
                 >
                   {isUploadingResume ? '上传中...' : '替换文件'}
                 </button>
@@ -2676,7 +2368,7 @@ function ResumeEditor() {
               <button
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isUploadingResume}
-                className="bg-stone-900 text-white px-4 py-2 text-[13px] font-medium rounded-md hover:bg-stone-800 transition-colors"
+                className="bg-stone-900 text-white px-4 py-2 text-[13px] font-medium rounded-md hover:bg-stone-800 transition-colors disabled:opacity-50"
               >
                 {isUploadingResume ? '上传中...' : '选择 PDF 文件'}
               </button>
@@ -2684,234 +2376,10 @@ function ResumeEditor() {
           )}
         </div>
       </div>
-
-      {/* Experience */}
-      <div className="bg-white p-6 rounded-lg border border-stone-200">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[14px] font-medium text-stone-900 flex items-center gap-2">
-            <BriefcaseIcon className="w-4 h-4" />
-            工作经历
-          </h3>
-          <button
-            onClick={addExperience}
-            className="flex items-center gap-2 bg-stone-900 text-white px-3 py-1.5 text-[12px] font-medium rounded-md hover:bg-stone-800 transition-colors"
-          >
-            <Plus className="w-3 h-3" />
-            添加经历
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          {experiences.map((exp, index) => (
-            <div key={exp.id} className="p-4 border border-stone-200 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[12px] text-stone-500">经历 {index + 1}</span>
-                <button
-                  onClick={() => removeExperience(exp.id)}
-                  className="text-red-500 hover:text-red-600"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="职位 / 经历标题（英文，可选）"
-                    value={exp.title}
-                    onChange={(e) => updateExperience(exp.id, 'title', e.target.value)}
-                    className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
-                  />
-                  <input
-                    type="text"
-                    placeholder="职位 / 经历标题（中文）"
-                    value={exp.title_zh}
-                    onChange={(e) => updateExperience(exp.id, 'title_zh', e.target.value)}
-                    className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="公司 / 组织（英文，可选）"
-                    value={exp.company}
-                    onChange={(e) => updateExperience(exp.id, 'company', e.target.value)}
-                    className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
-                  />
-                  <input
-                    type="text"
-                    placeholder="公司 / 组织（中文）"
-                    value={exp.company_zh}
-                    onChange={(e) => updateExperience(exp.id, 'company_zh', e.target.value)}
-                    className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
-                  />
-                </div>
-                <input
-                  type="text"
-                  placeholder="时间，例如 2024.03 - 2024.08 / 2021 - 至今"
-                  value={exp.period}
-                  onChange={(e) => updateExperience(exp.id, 'period', e.target.value)}
-                  className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <textarea
-                    placeholder="经历描述（英文，可选）"
-                    value={exp.description}
-                    onChange={(e) => updateExperience(exp.id, 'description', e.target.value)}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900 resize-none"
-                  />
-                  <textarea
-                    placeholder="经历描述（中文，可写项目职责、成果、技能、数据等）"
-                    value={exp.description_zh}
-                    onChange={(e) => updateExperience(exp.id, 'description_zh', e.target.value)}
-                    rows={4}
-                    className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900 resize-none"
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {experiences.length === 0 && (
-            <div className="text-center py-6 bg-stone-50 rounded-lg border border-dashed border-stone-300">
-              <p className="text-[13px] text-stone-500">还没有工作 / 项目经历</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Education */}
-      <div className="bg-white p-6 rounded-lg border border-stone-200">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[14px] font-medium text-stone-900 flex items-center gap-2">
-            <GraduationCap className="w-4 h-4" />
-            教育背景
-          </h3>
-          <button
-            onClick={addEducation}
-            className="flex items-center gap-2 bg-stone-900 text-white px-3 py-1.5 text-[12px] font-medium rounded-md hover:bg-stone-800 transition-colors"
-          >
-            <Plus className="w-3 h-3" />
-            添加教育经历
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          {educations.map((edu, index) => (
-            <div key={edu.id} className="p-4 border border-stone-200 rounded-lg">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-[12px] text-stone-500">教育经历 {index + 1}</span>
-                <button
-                  onClick={() => removeEducation(edu.id)}
-                  className="text-red-500 hover:text-red-600"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-              <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="学历 / 专业 / 项目名称（英文，可选）"
-                    value={edu.degree}
-                    onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)}
-                    className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
-                  />
-                  <input
-                    type="text"
-                    placeholder="学历 / 专业 / 项目名称（中文）"
-                    value={edu.degree_zh}
-                    onChange={(e) => updateEducation(edu.id, 'degree_zh', e.target.value)}
-                    className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    placeholder="学校 / 机构（英文，可选）"
-                    value={edu.school}
-                    onChange={(e) => updateEducation(edu.id, 'school', e.target.value)}
-                    className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
-                  />
-                  <input
-                    type="text"
-                    placeholder="学校 / 机构（中文）"
-                    value={edu.school_zh}
-                    onChange={(e) => updateEducation(edu.id, 'school_zh', e.target.value)}
-                    className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
-                  />
-                </div>
-                <input
-                  type="text"
-                  placeholder="时间，例如 2020.09 - 2024.06"
-                  value={edu.period}
-                  onChange={(e) => updateEducation(edu.id, 'period', e.target.value)}
-                  className="w-full px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
-                />
-              </div>
-            </div>
-          ))}
-
-          {educations.length === 0 && (
-            <div className="text-center py-6 bg-stone-50 rounded-lg border border-dashed border-stone-300">
-              <p className="text-[13px] text-stone-500">还没有教育经历</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Skills */}
-      <div className="bg-white p-6 rounded-lg border border-stone-200">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[14px] font-medium text-stone-900 flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
-            技能
-          </h3>
-          <button
-            onClick={addSkill}
-            className="flex items-center gap-2 bg-stone-900 text-white px-3 py-1.5 text-[12px] font-medium rounded-md hover:bg-stone-800 transition-colors"
-          >
-            <Plus className="w-3 h-3" />
-            添加技能
-          </button>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {skills.map((skill) => (
-            <div key={skill.id} className="flex items-center gap-1 bg-stone-100 px-3 py-2 rounded-md">
-              <input
-                type="text"
-                value={skill.name}
-                onChange={(e) => updateSkill(skill.id, e.target.value)}
-                placeholder="技能名称"
-                className="bg-transparent text-[13px] text-stone-700 focus:outline-none w-24"
-              />
-              <button
-                onClick={() => removeSkill(skill.id)}
-                className="text-stone-400 hover:text-red-500"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
-
-          {skills.length === 0 && (
-            <p className="text-[13px] text-stone-500">还没有添加技能</p>
-          )}
-        </div>
-      </div>
-
-      <button onClick={handleSave} disabled={isSaving} className={buttonClass}>
-        <Save className="w-4 h-4" />
-        {isSaving ? '保存中...' : '保存简历内容'}
-      </button>
     </div>
   );
 }
 
-// ============================================
-// Contact Editor
 // ============================================
 function ContactEditor() {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
