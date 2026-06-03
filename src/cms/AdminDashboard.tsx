@@ -2465,7 +2465,7 @@ function ContactEditor() {
     const newLink: SocialLink = {
       id: `temp-${Date.now()}`,
       name: '',
-      icon: 'Globe',
+      icon: 'Contact',
       url: '',
       order: socialLinks.length + 1,
       is_active: true,
@@ -2528,10 +2528,10 @@ function ContactEditor() {
       }
 
       await loadContact();
-      alert('Contact content saved successfully!');
+      alert('联系页面已保存');
     } catch (error) {
       console.error('Contact save error:', error);
-      alert('Failed to save contact content: ' + (error as Error).message);
+      alert('保存联系页面失败：' + (error as Error).message);
     } finally {
       setIsSaving(false);
     }
@@ -2546,19 +2546,19 @@ function ContactEditor() {
 
       {/* Contact Info */}
       <div className="bg-white p-6 rounded-lg border border-stone-200 space-y-6">
-        <h3 className="text-[14px] font-medium text-stone-900">Contact Information</h3>
+        <h3 className="text-[14px] font-medium text-stone-900">页面文案</h3>
 
         <div className="grid grid-cols-2 gap-4">
           <input
             type="text"
-            placeholder="Let's Connect Label (EN)"
+            placeholder="顶部小标题（英文，可选）"
             value={contact.letsConnect}
             onChange={(e) => setContact({ ...contact, letsConnect: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
           />
           <input
             type="text"
-            placeholder="Let's Connect Label (ZH)"
+            placeholder="顶部小标题（中文）"
             value={contact.letsConnectZh}
             onChange={(e) => setContact({ ...contact, letsConnectZh: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -2568,14 +2568,14 @@ function ContactEditor() {
         <div className="grid grid-cols-2 gap-4">
           <input
             type="text"
-            placeholder="Page Title (EN)"
+            placeholder="页面标题（英文，可选）"
             value={contact.title}
             onChange={(e) => setContact({ ...contact, title: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
           />
           <input
             type="text"
-            placeholder="Page Title (ZH)"
+            placeholder="页面标题（中文）"
             value={contact.titleZh}
             onChange={(e) => setContact({ ...contact, titleZh: e.target.value })}
             className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
@@ -2599,128 +2599,44 @@ function ContactEditor() {
           />
         </div>
 
-        <div className="pt-4 border-t border-stone-100">
-          <h4 className="text-[13px] font-medium text-stone-700 mb-4">Email Section</h4>
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Label (EN)"
-              value={contact.emailLabel}
-              onChange={(e) => setContact({ ...contact, emailLabel: e.target.value })}
-              className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-            />
-            <input
-              type="text"
-              placeholder="Label (ZH)"
-              value={contact.emailLabelZh}
-              onChange={(e) => setContact({ ...contact, emailLabelZh: e.target.value })}
-              className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <input
-              type="text"
-              placeholder="Description (EN)"
-              value={contact.emailDesc}
-              onChange={(e) => setContact({ ...contact, emailDesc: e.target.value })}
-              className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-            />
-            <input
-              type="text"
-              placeholder="Description (ZH)"
-              value={contact.emailDescZh}
-              onChange={(e) => setContact({ ...contact, emailDescZh: e.target.value })}
-              className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-            />
-          </div>
-          <input
-            type="email"
-            placeholder="Email Address"
-            value={contact.email}
-            onChange={(e) => setContact({ ...contact, email: e.target.value })}
-            className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900 mt-4"
-          />
-        </div>
-
-        <div className="pt-4 border-t border-stone-100">
-          <h4 className="text-[13px] font-medium text-stone-700 mb-4">Social Section</h4>
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              placeholder="Label (EN)"
-              value={contact.socialLabel}
-              onChange={(e) => setContact({ ...contact, socialLabel: e.target.value })}
-              className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-            />
-            <input
-              type="text"
-              placeholder="Label (ZH)"
-              value={contact.socialLabelZh}
-              onChange={(e) => setContact({ ...contact, socialLabelZh: e.target.value })}
-              className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4 mt-4">
-            <input
-              type="text"
-              placeholder="Description (EN)"
-              value={contact.socialDesc}
-              onChange={(e) => setContact({ ...contact, socialDesc: e.target.value })}
-              className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-            />
-            <input
-              type="text"
-              placeholder="Description (ZH)"
-              value={contact.socialDescZh}
-              onChange={(e) => setContact({ ...contact, socialDescZh: e.target.value })}
-              className="w-full px-4 py-3 border border-stone-200 rounded-md text-[14px] focus:outline-none focus:border-stone-900"
-            />
-          </div>
-        </div>
       </div>
 
-      {/* Social Links */}
+      {/* Contact Methods */}
       <div className="bg-white p-6 rounded-lg border border-stone-200">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[14px] font-medium text-stone-900 flex items-center gap-2">
-            <Globe className="w-4 h-4" />
-            Social Links
-          </h3>
+          <div>
+            <h3 className="text-[14px] font-medium text-stone-900 flex items-center gap-2">
+              <Globe className="w-4 h-4" />
+              联系方式
+            </h3>
+            <p className="mt-1 text-[12px] text-stone-500">内容会显示在联系页，并提供复制按钮。只有以 https://、mailto:、tel: 开头的内容会显示打开按钮。</p>
+          </div>
           <button
             onClick={addSocialLink}
             className="flex items-center gap-2 bg-stone-900 text-white px-3 py-1.5 text-[12px] font-medium rounded-md hover:bg-stone-800 transition-colors"
           >
             <Plus className="w-3 h-3" />
-            Add Link
+            添加联系方式
           </button>
         </div>
 
         <div className="space-y-3">
           {socialLinks.map((link, index) => (
-            <div key={link.id} className="flex items-center gap-3 p-3 border border-stone-200 rounded-lg">
-              <span className="text-[12px] text-stone-400 w-6">{index + 1}</span>
-              <select
-                value={link.icon}
-                onChange={(e) => updateSocialLink(link.id, 'icon', e.target.value)}
-                className="px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
-              >
-                {icons.map((icon) => (
-                  <option key={icon} value={icon}>{icon}</option>
-                ))}
-              </select>
+            <div key={link.id} className="grid grid-cols-[32px_1fr_1.6fr_auto] items-center gap-3 p-3 border border-stone-200 rounded-lg">
+              <span className="text-[12px] text-stone-400">{index + 1}</span>
               <input
                 type="text"
-                placeholder="Platform Name"
+                placeholder="名称，例如 微信 / 邮箱 / 电话 / 小红书"
                 value={link.name}
                 onChange={(e) => updateSocialLink(link.id, 'name', e.target.value)}
-                className="flex-1 px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
+                className="px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
               />
               <input
-                type="url"
-                placeholder="URL"
+                type="text"
+                placeholder="内容，例如 wxid_123 / hello@example.com / https://..."
                 value={link.url}
                 onChange={(e) => updateSocialLink(link.id, 'url', e.target.value)}
-                className="flex-1 px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
+                className="px-3 py-2 border border-stone-200 rounded-md text-[13px] focus:outline-none focus:border-stone-900"
               />
               <button
                 onClick={() => removeSocialLink(link.id)}
@@ -2734,7 +2650,7 @@ function ContactEditor() {
           {socialLinks.length === 0 && (
             <div className="text-center py-6 bg-stone-50 rounded-lg border border-dashed border-stone-300">
               <Globe className="w-8 h-8 text-stone-300 mx-auto mb-2" />
-              <p className="text-[13px] text-stone-500">No social links added yet</p>
+              <p className="text-[13px] text-stone-500">还没有添加联系方式</p>
             </div>
           )}
         </div>
@@ -2742,7 +2658,7 @@ function ContactEditor() {
 
       <button onClick={handleSave} disabled={isSaving} className={buttonClass}>
         <Save className="w-4 h-4" />
-        {isSaving ? 'Saving...' : 'Save Contact'}
+        {isSaving ? '保存中...' : '保存联系页面'}
       </button>
     </div>
   );
