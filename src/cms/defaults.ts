@@ -79,6 +79,7 @@ export interface CMSContent {
   servicesCtaDescZh: string;
   servicesCtaButton: string;
   servicesCtaButtonZh: string;
+  servicesFeatureImage: string;
 
   // Resume
   resumeHeaderTitle: string;
@@ -115,6 +116,7 @@ export interface CMSContent {
   contactSocialLabelZh: string;
   contactSocialDesc: string;
   contactSocialDescZh: string;
+  contactFeatureImage: string;
   socialLinks: SocialLink[];
 
   // Footer
@@ -181,6 +183,7 @@ export const defaultSettings: SiteSettingsMap = {
   services_cta_desc_zh: '我随时乐意讨论产品设计工作或合作机会。',
   services_cta_button: 'Get in Touch',
   services_cta_button_zh: '联系我',
+  services_feature_image: '',
 
   // Contact
   contact_lets_connect: "Let's Connect",
@@ -197,11 +200,12 @@ export const defaultSettings: SiteSettingsMap = {
   contact_social_label_zh: '社交媒体',
   contact_social_desc: 'Follow me for updates and behind-the-scenes',
   contact_social_desc_zh: '关注我获取最新动态',
+  contact_feature_image: '',
   contact_email: 'hello@example.com',
 
   // Resume
-  resume_header_title: 'Experience & Education',
-  resume_header_title_zh: '经历与教育',
+  resume_header_title: 'Resume',
+  resume_header_title_zh: '个人简历',
   resume_experience_label: 'Experience',
   resume_experience_label_zh: '工作经历',
   resume_education_label: 'Education',
@@ -300,6 +304,7 @@ export const defaultContent: CMSContent = {
   servicesCtaDescZh: defaultSettings.services_cta_desc_zh,
   servicesCtaButton: defaultSettings.services_cta_button,
   servicesCtaButtonZh: defaultSettings.services_cta_button_zh,
+  servicesFeatureImage: defaultSettings.services_feature_image,
 
   // Resume
   resumeHeaderTitle: defaultSettings.resume_header_title,
@@ -336,6 +341,7 @@ export const defaultContent: CMSContent = {
   contactSocialLabelZh: defaultSettings.contact_social_label_zh,
   contactSocialDesc: defaultSettings.contact_social_desc,
   contactSocialDescZh: defaultSettings.contact_social_desc_zh,
+  contactFeatureImage: defaultSettings.contact_feature_image,
   socialLinks: [],
 
   // Footer

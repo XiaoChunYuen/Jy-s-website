@@ -258,6 +258,7 @@ export function CMSProvider({ children }: { children: ReactNode }) {
         servicesCtaDescZh: mergedSettings.services_cta_desc_zh || defaultContent.servicesCtaDescZh,
         servicesCtaButton: mergedSettings.services_cta_button || defaultContent.servicesCtaButton,
         servicesCtaButtonZh: mergedSettings.services_cta_button_zh || defaultContent.servicesCtaButtonZh,
+        servicesFeatureImage: mergedSettings.services_feature_image || defaultContent.servicesFeatureImage,
 
         // Resume
         resumeHeaderTitle: mergedSettings.resume_header_title || defaultContent.resumeHeaderTitle,
@@ -294,6 +295,7 @@ export function CMSProvider({ children }: { children: ReactNode }) {
         contactSocialLabelZh: mergedSettings.contact_social_label_zh || defaultContent.contactSocialLabelZh,
         contactSocialDesc: mergedSettings.contact_social_desc || defaultContent.contactSocialDesc,
         contactSocialDescZh: mergedSettings.contact_social_desc_zh || defaultContent.contactSocialDescZh,
+        contactFeatureImage: mergedSettings.contact_feature_image || defaultContent.contactFeatureImage,
         socialLinks,
 
         // Footer

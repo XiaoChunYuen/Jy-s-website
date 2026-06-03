@@ -1,18 +1,11 @@
-import type * as React from 'react';
 import { motion } from 'framer-motion';
+import { ArrowRight, Layers, Palette, Search, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useCMS } from '../cms/CMSContext';
 import { useLanguage } from '../i18n/LanguageContext';
-import { Palette, Layers, Search, Globe, Sparkles, Zap } from 'lucide-react';
 import { fadeInUp, staggerContainer, staggerItem } from '../shared/animations';
 
-const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
-  Palette,
-  Layers,
-  Search,
-  Globe,
-  Sparkles,
-  Zap,
-};
+const serviceIcons = [Palette, Search, Layers, Sparkles];
 
 export function Services() {
   const { content, isLoading } = useCMS();
@@ -27,81 +20,115 @@ export function Services() {
   }
 
   const isZh = language === 'zh';
+  const services = content.services;
+  const featureImage = content.servicesFeatureImage;
 
   return (
-    <main className="w-full">
-      {/* Header Section with subtle background */}
-      <section className="relative bg-stone-50 py-20 md:py-28">
-        <div className="max-w-[1000px] mx-auto px-6">
+    <main className="w-full bg-[#fbfaf8]">
+      <section className="relative overflow-hidden pt-24 pb-14 md:pt-32 md:pb-20">
+        <div className="mx-auto grid max-w-6xl grid-cols-1 items-end gap-10 px-6 lg:grid-cols-[1fr_420px]">
           <motion.div
             initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, amount: 0.3 }}
+            animate="visible"
             variants={staggerContainer}
           >
             <motion.span
               variants={staggerItem}
-              className="block text-[11px] font-semibold tracking-[0.3em] uppercase text-stone-400 mb-6"
+              className="mb-6 block text-[11px] font-semibold uppercase tracking-[0.3em] text-stone-400"
             >
               {isZh ? content.servicesWhatIDoZh : content.servicesWhatIDo}
             </motion.span>
             <motion.h1
               variants={staggerItem}
-              className="font-serif italic text-5xl md:text-7xl lg:text-8xl text-stone-900 leading-[1.1]"
+              className="font-serif italic text-5xl leading-[1.04] text-stone-950 md:text-7xl lg:text-8xl"
             >
               {isZh ? content.servicesTitleZh : content.servicesTitle}
             </motion.h1>
+            <motion.p
+              variants={staggerItem}
+              className="mt-8 max-w-xl text-[15px] leading-[1.9] text-stone-600"
+            >
+              {isZh ? content.servicesCtaDescZh : content.servicesCtaDesc}
+            </motion.p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
+            className="relative"
+          >
+            <div className="aspect-[4/3] overflow-hidden rounded-[8px] border border-stone-200 bg-stone-100 shadow-[0_30px_90px_rgba(28,25,23,0.10)]">
+              {featureImage ? (
+                <img
+                  src={featureImage}
+                  alt={isZh ? '服务页视觉图' : 'Services visual'}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center px-8 text-center text-[13px] leading-7 text-stone-400">
+                  {isZh ? '在后台上传一张服务页图片后，这里会展示你的视觉风格。' : 'Upload a services image in the dashboard to fill this visual area.'}
+                </div>
+              )}
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Services List */}
-      <section className="py-16 md:py-24 bg-white">
-        <div className="max-w-[1000px] mx-auto px-6">
+      <section className="bg-white py-14 md:py-20">
+        <div className="mx-auto max-w-6xl px-6">
           <motion.div
-            className="space-y-0"
+            className="space-y-6"
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.1 }}
+            viewport={{ once: true, amount: 0.12 }}
             variants={staggerContainer}
           >
-            {content.services.map((service, index) => {
-              const IconComponent = iconMap[service.icon] || Palette;
+            {services.map((service, index) => {
+              const Icon = serviceIcons[index % serviceIcons.length];
+              const title = isZh ? service.title_zh || service.title : service.title;
+              const description = isZh ? service.description_zh || service.description : service.description;
 
               return (
-                <motion.div
+                <motion.article
                   key={service.id}
                   variants={staggerItem}
-                  className="grid grid-cols-1 md:grid-cols-12 gap-8 py-12 md:py-16 border-b border-stone-100 last:border-b-0"
+                  className="grid grid-cols-1 gap-8 border-t border-stone-200 py-10 md:grid-cols-[180px_1fr_260px] md:py-12"
                 >
-                  {/* Number & Icon */}
-                  <div className="md:col-span-3 flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-full bg-stone-100 flex items-center justify-center">
-                      <IconComponent className="w-5 h-5 text-stone-600" />
-                    </div>
-                    <div>
-                      <div className="text-[11px] font-semibold tracking-[0.2em] uppercase text-stone-400 mb-1">
-                        0{index + 1}
-                      </div>
-                    </div>
+                  <div className="flex items-start gap-4">
+                    <span className="text-[12px] font-medium text-stone-300">{String(index + 1).padStart(2, '0')}</span>
+                    <span className="flex h-11 w-11 items-center justify-center rounded-full bg-stone-100 text-stone-700">
+                      <Icon className="h-4 w-4" />
+                    </span>
                   </div>
 
-                  {/* Content */}
-                  <div className="md:col-span-9">
-                    <h2 className="font-serif italic text-2xl md:text-3xl mb-4 text-stone-900">
-                      {isZh ? service.title_zh || service.title : service.title}
+                  <div>
+                    <h2 className="font-serif italic text-3xl leading-tight text-stone-950 md:text-4xl">
+                      {title || (isZh ? '未命名服务' : 'Untitled service')}
                     </h2>
-                    <p className="text-[15px] text-stone-600 leading-[1.8] max-w-2xl">
-                      {isZh ? service.description_zh || service.description : service.description}
+                    <p className="mt-5 max-w-2xl text-[15px] leading-[1.9] text-stone-600">
+                      {description || (isZh ? '在后台补充这项服务的描述。' : 'Add the description for this service in the dashboard.')}
                     </p>
                   </div>
-                </motion.div>
+
+                  <div className="hidden overflow-hidden rounded-[8px] bg-stone-100 md:block">
+                    {featureImage ? (
+                      <img
+                        src={featureImage}
+                        alt=""
+                        className="h-full min-h-[170px] w-full object-cover opacity-90"
+                        style={{ objectPosition: `${35 + index * 12}% center` }}
+                      />
+                    ) : (
+                      <div className="h-full min-h-[170px] bg-[linear-gradient(135deg,#f5f2ec,#e7e1d8)]" />
+                    )}
+                  </div>
+                </motion.article>
               );
             })}
 
-            {/* Fallback if no services */}
-            {content.services.length === 0 && (
-              <div className="text-center py-12 text-stone-400">
+            {services.length === 0 && (
+              <div className="flex min-h-[260px] items-center justify-center rounded-[8px] border border-dashed border-stone-300 bg-stone-50 px-6 text-center text-[14px] text-stone-500">
                 {isZh ? '尚未配置服务内容。' : 'No services configured yet.'}
               </div>
             )}
@@ -109,27 +136,29 @@ export function Services() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 md:py-28 bg-stone-900">
+      <section className="bg-stone-950 py-16 md:py-20">
         <motion.div
-          className="max-w-[800px] mx-auto px-6 text-center"
+          className="mx-auto flex max-w-6xl flex-col gap-8 px-6 md:flex-row md:items-center md:justify-between"
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, amount: 0.3 }}
           variants={fadeInUp}
         >
-          <h2 className="font-serif italic text-3xl md:text-4xl text-white mb-6">
-            {isZh ? content.servicesCtaTitleZh : content.servicesCtaTitle}
-          </h2>
-          <p className="text-stone-400 text-[15px] leading-[1.8] mb-10 max-w-lg mx-auto">
-            {isZh ? content.servicesCtaDescZh : content.servicesCtaDesc}
-          </p>
-          <a
-            href="/contact"
-            className="inline-block bg-white text-stone-900 px-10 py-4 text-[11px] font-semibold tracking-[0.15em] uppercase hover:bg-stone-100 transition-colors rounded-md"
+          <div>
+            <h2 className="font-serif italic text-3xl text-white md:text-4xl">
+              {isZh ? content.servicesCtaTitleZh : content.servicesCtaTitle}
+            </h2>
+            <p className="mt-4 max-w-xl text-[14px] leading-[1.8] text-stone-400">
+              {isZh ? content.servicesCtaDescZh : content.servicesCtaDesc}
+            </p>
+          </div>
+          <Link
+            to="/contact"
+            className="inline-flex w-fit items-center gap-2 rounded-full bg-white px-6 py-3 text-[12px] font-semibold uppercase tracking-[0.14em] text-stone-950 transition-colors hover:bg-stone-200"
           >
             {isZh ? content.servicesCtaButtonZh : content.servicesCtaButton}
-          </a>
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </motion.div>
       </section>
     </main>

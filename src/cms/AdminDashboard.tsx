@@ -101,6 +101,26 @@ const saveSiteSettings = async (settings: SiteSettingInput[]) => {
   }
 };
 
+const uploadSettingImage = async (file: File, prefix: string) => {
+  const compressedFile = await compressImage(file, {
+    maxWidth: 1800,
+    maxHeight: 1200,
+    quality: 0.86,
+  });
+  const cleanFileName = compressedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const fileName = `${prefix}-${Date.now()}-${cleanFileName}`;
+  const { error } = await supabase.storage.from('hero-backgrounds').upload(fileName, compressedFile, {
+    upsert: true,
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  const { data: { publicUrl } } = supabase.storage.from('hero-backgrounds').getPublicUrl(fileName);
+  return publicUrl;
+};
+
 const buttonClass =
   'inline-flex items-center gap-2 bg-stone-900 text-white px-5 py-3 text-[13px] font-medium rounded-md hover:bg-stone-800 transition-colors disabled:opacity-50';
 
@@ -1953,6 +1973,9 @@ function ServicesEditor() {
   const [services, setServices] = useState<Service[]>([]);
   const [persistedIds, setPersistedIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [featureImage, setFeatureImage] = useState('');
+  const serviceImageInputRef = useRef<HTMLInputElement>(null);
   const [cta, setCta] = useState({
     title: '',
     titleZh: '',
@@ -1974,6 +1997,7 @@ function ServicesEditor() {
         'services_cta_desc_zh',
         'services_cta_button',
         'services_cta_button_zh',
+        'services_feature_image',
       ]),
     ]);
 
@@ -1993,6 +2017,7 @@ function ServicesEditor() {
       button: settings.services_cta_button || '',
       buttonZh: settings.services_cta_button_zh || '',
     });
+    setFeatureImage(settings.services_feature_image || '');
   };
 
   useEffect(() => {
@@ -2025,6 +2050,25 @@ function ServicesEditor() {
     setServices(services.map((s) => (s.id === id ? { ...s, [field]: value } : s)));
   };
 
+  const handleFeatureImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const publicUrl = await uploadSettingImage(file, 'services-feature');
+      setFeatureImage(publicUrl);
+      await saveSiteSettings([{ key: 'services_feature_image', value: publicUrl, type: 'image' }]);
+      alert('服务页图片已上传');
+    } catch (error) {
+      console.error('Services image upload error:', error);
+      alert('服务页图片上传失败：' + (error as Error).message);
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = '';
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -2035,6 +2079,7 @@ function ServicesEditor() {
         { key: 'services_cta_desc_zh', value: cta.descZh },
         { key: 'services_cta_button', value: cta.button },
         { key: 'services_cta_button_zh', value: cta.buttonZh },
+        { key: 'services_feature_image', value: featureImage, type: 'image' },
       ]);
 
       const currentPersistedIds = services.filter((service) => isPersistedId(service.id)).map((service) => service.id);
@@ -2078,6 +2123,40 @@ function ServicesEditor() {
       <div>
         <h2 className="font-serif italic text-3xl text-stone-900 mb-2">Services</h2>
         <p className="text-[14px] text-stone-500">Manage your services and CTA section</p>
+      </div>
+
+      <div className="bg-white p-6 rounded-lg border border-stone-200">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-[14px] font-medium text-stone-900">服务页图片</h3>
+            <p className="mt-1 text-[12px] text-stone-500">用于服务页首屏和服务模块的视觉区域。</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => serviceImageInputRef.current?.click()}
+            disabled={isUploadingImage}
+            className="flex items-center gap-2 bg-stone-900 text-white px-3 py-1.5 text-[12px] font-medium rounded-md hover:bg-stone-800 transition-colors disabled:opacity-50"
+          >
+            <Upload className="w-3 h-3" />
+            {isUploadingImage ? '上传中...' : '上传图片'}
+          </button>
+        </div>
+        <input
+          ref={serviceImageInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFeatureImageUpload}
+          className="hidden"
+        />
+        <div className="aspect-[16/9] overflow-hidden rounded-lg bg-stone-100 border border-stone-200">
+          {featureImage ? (
+            <img src={featureImage} alt="Services visual" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-stone-300">
+              <Image className="h-10 w-10" />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Services List */}
@@ -2385,6 +2464,9 @@ function ContactEditor() {
   const [socialLinks, setSocialLinks] = useState<SocialLink[]>([]);
   const [persistedIds, setPersistedIds] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [featureImage, setFeatureImage] = useState('');
+  const contactImageInputRef = useRef<HTMLInputElement>(null);
   const [contact, setContact] = useState({
     letsConnect: '',
     letsConnectZh: '',
@@ -2402,8 +2484,6 @@ function ContactEditor() {
     socialDesc: '',
     socialDescZh: ''
   });
-
-  const icons = ['Linkedin', 'Instagram', 'Dribbble', 'Github', 'Twitter', 'Youtube', 'Globe'];
 
   const loadContact = async () => {
     const [{ data, error }, settings] = await Promise.all([
@@ -2424,6 +2504,7 @@ function ContactEditor() {
         'contact_social_label_zh',
         'contact_social_desc',
         'contact_social_desc_zh',
+        'contact_feature_image',
       ]),
     ]);
 
@@ -2452,6 +2533,7 @@ function ContactEditor() {
       socialDesc: settings.contact_social_desc || '',
       socialDescZh: settings.contact_social_desc_zh || '',
     });
+    setFeatureImage(settings.contact_feature_image || '');
   };
 
   useEffect(() => {
@@ -2482,6 +2564,25 @@ function ContactEditor() {
     setSocialLinks(socialLinks.map((l) => (l.id === id ? { ...l, [field]: value } : l)));
   };
 
+  const handleFeatureImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const publicUrl = await uploadSettingImage(file, 'contact-feature');
+      setFeatureImage(publicUrl);
+      await saveSiteSettings([{ key: 'contact_feature_image', value: publicUrl, type: 'image' }]);
+      alert('联系页图片已上传');
+    } catch (error) {
+      console.error('Contact image upload error:', error);
+      alert('联系页图片上传失败：' + (error as Error).message);
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = '';
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     try {
@@ -2501,6 +2602,7 @@ function ContactEditor() {
         { key: 'contact_social_label_zh', value: contact.socialLabelZh },
         { key: 'contact_social_desc', value: contact.socialDesc },
         { key: 'contact_social_desc_zh', value: contact.socialDescZh },
+        { key: 'contact_feature_image', value: featureImage, type: 'image' },
       ]);
 
       const currentPersistedIds = socialLinks.filter((link) => isPersistedId(link.id)).map((link) => link.id);
@@ -2542,6 +2644,40 @@ function ContactEditor() {
       <div>
         <h2 className="font-serif italic text-3xl text-stone-900 mb-2">Contact</h2>
         <p className="text-[14px] text-stone-500">Manage contact page content and social links</p>
+      </div>
+
+      <div className="bg-white p-6 rounded-lg border border-stone-200">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-[14px] font-medium text-stone-900">联系页图片</h3>
+            <p className="mt-1 text-[12px] text-stone-500">可以上传头像、工作照、生活照或适合联系页的视觉图。</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => contactImageInputRef.current?.click()}
+            disabled={isUploadingImage}
+            className="flex items-center gap-2 bg-stone-900 text-white px-3 py-1.5 text-[12px] font-medium rounded-md hover:bg-stone-800 transition-colors disabled:opacity-50"
+          >
+            <Upload className="w-3 h-3" />
+            {isUploadingImage ? '上传中...' : '上传图片'}
+          </button>
+        </div>
+        <input
+          ref={contactImageInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFeatureImageUpload}
+          className="hidden"
+        />
+        <div className="aspect-[4/3] overflow-hidden rounded-lg bg-stone-100 border border-stone-200">
+          {featureImage ? (
+            <img src={featureImage} alt="Contact visual" className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-stone-300">
+              <Image className="h-10 w-10" />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Contact Info */}

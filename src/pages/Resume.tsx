@@ -20,7 +20,10 @@ export function Resume() {
   const resumeUrl = content.resumeFile?.file_url || '';
   const resumeTitle = isZh ? content.resumeHeaderTitleZh : content.resumeHeaderTitle;
   const downloadText = isZh ? content.resumeDownloadTextZh : content.resumeDownloadText;
-  const pageTitle = resumeTitle || (isZh ? '个人简历' : 'Resume');
+  const oldResumeTitles = ['Experience & Education', '经历与教育'];
+  const pageTitle = resumeTitle && !oldResumeTitles.includes(resumeTitle)
+    ? resumeTitle
+    : (isZh ? '个人简历' : 'Resume');
   const openText = isZh ? '新窗口打开' : 'Open';
   const emptyText = isZh
     ? '还没有上传简历 PDF。请先在后台上传文件。'
